@@ -644,11 +644,16 @@ static element_result create_virtual_if(
     stack_allocation* true_vr;
     stack_allocation* false_vr;
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_true().get(), execution_type::conditional));
+    const bool scalar_constant_if = (
+        ei.if_true()->is_constant() && ei.if_false()->is_constant()
+        && ei.if_true()->get_size() == 1 && ei.if_false()->get_size() == 1);
+    const execution_type exectype = (scalar_constant_if) ? state.current_context_type() : execution_type::conditional;
+
+    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_true().get(), exectype));
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.if_true().get(), &true_vr));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_false().get(), execution_type::conditional));
+    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_false().get(), exectype));
     ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.if_false().get(), &false_vr));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
@@ -665,13 +670,19 @@ static element_result prepare_virtual_if(
     const element::instruction* dep0 = ei.predicate().get();
     const element::instruction* dep1 = ei.if_true().get();
     const element::instruction* dep2 = ei.if_false().get();
+
+    const bool scalar_constant_if = (
+        dep1->is_constant() && dep2->is_constant()
+        && dep1->get_size() == 1 && dep2->get_size() == 1);
+    const execution_type exectype = (scalar_constant_if) ? state.current_context_type() : execution_type::conditional;
+
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
 
-    ELEMENT_OK_OR_RETURN(state.push_context(dep1, execution_type::conditional));
+    ELEMENT_OK_OR_RETURN(state.push_context(dep1, exectype));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
-    ELEMENT_OK_OR_RETURN(state.push_context(dep2, execution_type::conditional));
+    ELEMENT_OK_OR_RETURN(state.push_context(dep2, exectype));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep2));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
@@ -689,13 +700,18 @@ static element_result allocate_virtual_if(
     compiler_state& state,
     const element::instruction_if& ei)
 {
+    const bool scalar_constant_if = (
+        ei.if_true()->is_constant() && ei.if_false()->is_constant()
+        && ei.if_true()->get_size() == 1 && ei.if_false()->get_size() == 1);
+    const execution_type exectype = (scalar_constant_if) ? state.current_context_type() : execution_type::conditional;
+
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.predicate().get()));
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_true().get(), execution_type::conditional));
+    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_true().get(), exectype));
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.if_true().get()));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_false().get(), execution_type::conditional));
+    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_false().get(), exectype));
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.if_false().get()));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
@@ -717,6 +733,9 @@ static element_result compile_if(
     if (!true_vr || !false_vr)
         return ELEMENT_ERROR_UNKNOWN;
 
+    const bool scalar_constant_if = (true_in->is_constant() && false_in->is_constant() && true_vr->count == 1);
+    const execution_type exectype = (scalar_constant_if) ? state.current_context_type() : execution_type::conditional;
+
     uint16_t predicate_stack_idx, true_stack_idx, false_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(predicate_in, predicate_stack_idx));
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(true_in, true_stack_idx));
@@ -726,30 +745,38 @@ static element_result compile_if(
 
     // compile the predicate
     ELEMENT_OK_OR_RETURN(compile_instruction(state, predicate_in, output, flags));
-    // make branch logic
+    // compare predicate to determine execution path
     output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, predicate_stack_idx, 0, 0 });
-    const size_t predicate_branchcle_idx = output.size();
-    output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, 0, 0 }); // target filled in at the end
-    // compile the true branch
-    ELEMENT_OK_OR_RETURN(state.push_context(true_in, execution_type::conditional));
-    ELEMENT_OK_OR_RETURN(compile_instruction(state, true_in, output, flags));
-    ELEMENT_OK_OR_RETURN(state.pop_context());
-    copy_stack_values(true_stack_idx, stack_idx, true_vr->count, output);
-    const size_t branch_past_idx = output.size();
-    output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, 0, 0 }); // target filled in at the end
-    // compile the false branch
-    const size_t false_idx = output.size();
-    ELEMENT_OK_OR_RETURN(state.push_context(false_in, execution_type::conditional));
-    ELEMENT_OK_OR_RETURN(compile_instruction(state, false_in, output, flags));
-    ELEMENT_OK_OR_RETURN(state.pop_context());
-    copy_stack_values(false_stack_idx, stack_idx, false_vr->count, output);
-    const size_t past_idx = output.size();
 
-    // fill in targets for our branches
-    output[predicate_branchcle_idx].arg2 = U16_LO(false_idx);
-    output[predicate_branchcle_idx].arg3 = U16_HI(false_idx);
-    output[branch_past_idx].arg2 = U16_LO(past_idx);
-    output[branch_past_idx].arg3 = U16_HI(past_idx);
+    // if both results are single constants, just do a conditional assign rather than all the messy branching
+    if (scalar_constant_if) {
+        ELEMENT_OK_OR_RETURN(compile_instruction(state, true_in, output, flags));
+        ELEMENT_OK_OR_RETURN(compile_instruction(state, false_in, output, flags));
+        output.emplace_back(lmnt_instruction { LMNT_OP_ASSIGNCLE, false_stack_idx, true_stack_idx, stack_idx });
+    } else {
+        const size_t predicate_branchcle_idx = output.size();
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, 0, 0 }); // target filled in at the end
+        // compile the true branch
+        ELEMENT_OK_OR_RETURN(state.push_context(true_in, execution_type::conditional));
+        ELEMENT_OK_OR_RETURN(compile_instruction(state, true_in, output, flags));
+        ELEMENT_OK_OR_RETURN(state.pop_context());
+        copy_stack_values(true_stack_idx, stack_idx, true_vr->count, output);
+        const size_t branch_past_idx = output.size();
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, 0, 0 }); // target filled in at the end
+        // compile the false branch
+        const size_t false_idx = output.size();
+        ELEMENT_OK_OR_RETURN(state.push_context(false_in, execution_type::conditional));
+        ELEMENT_OK_OR_RETURN(compile_instruction(state, false_in, output, flags));
+        ELEMENT_OK_OR_RETURN(state.pop_context());
+        copy_stack_values(false_stack_idx, stack_idx, false_vr->count, output);
+        const size_t past_idx = output.size();
+
+        // fill in targets for our branches
+        output[predicate_branchcle_idx].arg2 = U16_LO(false_idx);
+        output[predicate_branchcle_idx].arg3 = U16_HI(false_idx);
+        output[branch_past_idx].arg2 = U16_LO(past_idx);
+        output[branch_past_idx].arg3 = U16_HI(past_idx);
+    }
 
     return ELEMENT_OK;
 }
