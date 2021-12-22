@@ -232,6 +232,10 @@ endif()
 add_library(element ${element_sources})
 set_property(TARGET element PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_definitions(element PRIVATE "ELEMENT_EXPORT")
+# make sure we don't add dllimport if building statically
+if (NOT BUILD_SHARED_LIBS)
+    target_compile_definitions(element INTERFACE "ELEMENT_STATIC")
+endif ()
 add_library(element::element ALIAS element)
 
 # For VS
