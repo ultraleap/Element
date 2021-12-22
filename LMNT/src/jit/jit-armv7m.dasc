@@ -1127,154 +1127,140 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
 
         case LMNT_OP_ASSIGNCEQ:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .long true_bin
-            |2:
-            | .long false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
             | bne >3
-            | vldr s(reg3), <1
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg1)
+            } else {
+                | reads reg3, in.arg1
+            }
             | b >4
             |3:
-            | vldr s(reg3), <2
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg2)
+            } else {
+                | reads reg3, in.arg2
+            }
             |4:
             | writes_or_notify reg3, in.arg3, vtmps1
             break;
         }
         case LMNT_OP_ASSIGNCNE:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .long true_bin
-            |2:
-            | .long false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
             | bne >3
-            | vldr s(reg3), <2
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg2)
+            } else {
+                | reads reg3, in.arg2
+            }
             | b >4
             |3:
-            | vldr s(reg3), <1
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg1)
+            } else {
+                | reads reg3, in.arg1
+            }
             |4:
             | writes_or_notify reg3, in.arg3, vtmps1
             break;
         }
         case LMNT_OP_ASSIGNCLT:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .long true_bin
-            |2:
-            | .long false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
             | bcc >3
-            | vldr s(reg3), <2
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg2)
+            } else {
+                | reads reg3, in.arg2
+            }
             | b >4
             |3:
-            | vldr s(reg3), <1
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg1)
+            } else {
+                | reads reg3, in.arg1
+            }
             |4:
             | writes_or_notify reg3, in.arg3, vtmps1
             break;
         }
         case LMNT_OP_ASSIGNCLE:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .long true_bin
-            |2:
-            | .long false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
             | bls >3
-            | vldr s(reg3), <2
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg2)
+            } else {
+                | reads reg3, in.arg2
+            }
             | b >4
             |3:
-            | vldr s(reg3), <1
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg1)
+            } else {
+                | reads reg3, in.arg1
+            }
             |4:
             | writes_or_notify reg3, in.arg3, vtmps1
             break;
         }
         case LMNT_OP_ASSIGNCGT:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .long true_bin
-            |2:
-            | .long false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
             | bgt >3
-            | vldr s(reg3), <2
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg2)
+            } else {
+                | reads reg3, in.arg2
+            }
             | b >4
             |3:
-            | vldr s(reg3), <1
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg1)
+            } else {
+                | reads reg3, in.arg1
+            }
             |4:
             | writes_or_notify reg3, in.arg3, vtmps1
             break;
         }
         case LMNT_OP_ASSIGNCGE:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .long true_bin
-            |2:
-            | .long false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
             | bge >3
-            | vldr s(reg3), <2
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg2)
+            } else {
+                | reads reg3, in.arg2
+            }
             | b >4
             |3:
-            | vldr s(reg3), <1
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg1)
+            } else {
+                | reads reg3, in.arg1
+            }
             |4:
             | writes_or_notify reg3, in.arg3, vtmps1
             break;
         }
         case LMNT_OP_ASSIGNCUN:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .long true_bin
-            |2:
-            | .long false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
             | bvs >3
-            | vldr s(reg3), <2
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg2)
+            } else {
+                | reads reg3, in.arg2
+            }
             | b >4
             |3:
-            | vldr s(reg3), <1
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | vmov.f32 s(reg3), s(reg1)
+            } else {
+                | reads reg3, in.arg1
+            }
             |4:
             | writes_or_notify reg3, in.arg3, vtmps1
             break;

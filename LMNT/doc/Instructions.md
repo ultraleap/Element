@@ -1239,135 +1239,135 @@ Note that the branch target is permitted to be equal to the instruction count (i
 
 
 ## `ASSIGNCEQ`
-Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced an equal result.
+Assign to the target stack location one of two values, depending on whether the last `CMP` or `CMPZ` instruction produced an equal result.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type      | Size   | Meaning                                                |
 | --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
-| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
-| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 1   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is true      |
+| 2   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is false     |
 | 3   | Output    | Stack Loc | Scalar | Stack location to assign the result to                 |
 
 ```c
     if (flags.EQ)
-        stack[arg3] = signed_value_cast(arg1)
+        stack[arg3] = stack[arg1]
     else
-        stack[arg3] = signed_value_cast(arg2)
+        stack[arg3] = stack[arg2]
 ```
 
 
 ## `ASSIGNCNE`
-Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced a not-equal result.
+Assign to the target stack location one of two values, depending on whether the last `CMP` or `CMPZ` instruction produced a not-equal result.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type      | Size   | Meaning                                                |
 | --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
-| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
-| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 1   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is true      |
+| 2   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is false     |
 | 3   | Output    | Stack Loc | Scalar | Stack location to assign the result to                 |
 
 ```c
     if (!flags.EQ)
-        stack[arg3] = signed_value_cast(arg1)
+        stack[arg3] = stack[arg1]
     else
-        stack[arg3] = signed_value_cast(arg2)
+        stack[arg3] = stack[arg2]
 ```
 
 
 ## `ASSIGNCLT`
-Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced a less-than result.
+Assign to the target stack location one of two values, depending on whether the last `CMP` or `CMPZ` instruction produced a less-than result.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type      | Size   | Meaning                                                |
 | --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
-| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
-| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 1   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is true      |
+| 2   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is false     |
 | 3   | Output    | Stack Loc | Scalar | Stack location to assign the result to                 |
 
 ```c
     if (flags.LT)
-        stack[arg3] = signed_value_cast(arg1)
+        stack[arg3] = stack[arg1]
     else
-        stack[arg3] = signed_value_cast(arg2)
+        stack[arg3] = stack[arg2]
 ```
 
 
 ## `ASSIGNCLE`
-Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced a less-than or equal result.
+Assign to the target stack location one of two values, depending on whether the last `CMP` or `CMPZ` instruction produced a less-than or equal result.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type      | Size   | Meaning                                                |
 | --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
-| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
-| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 1   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is true      |
+| 2   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is false     |
 | 3   | Output    | Stack Loc | Scalar | Stack location to assign the result to                 |
 
 ```c
     if (flags.LT || flags.EQ)
-        stack[arg3] = signed_value_cast(arg1)
+        stack[arg3] = stack[arg1]
     else
-        stack[arg3] = signed_value_cast(arg2)
+        stack[arg3] = stack[arg2]
 ```
 
 
 ## `ASSIGNCGT`
-Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced a greater-than result.
+Assign to the target stack location one of two values, depending on whether the last `CMP` or `CMPZ` instruction produced a greater-than result.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type      | Size   | Meaning                                                |
 | --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
-| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
-| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 1   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is true      |
+| 2   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is false     |
 | 3   | Input     | Stack Loc | Scalar | Stack location to assign the result to                 |
 
 ```c
     if (flags.GT)
-        stack[arg3] = signed_value_cast(arg1)
+        stack[arg3] = stack[arg1]
     else
-        stack[arg3] = signed_value_cast(arg2)
+        stack[arg3] = stack[arg2]
 ```
 
 
 ## `ASSIGNCGE`
-Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced a greater-than or equal result.
+Assign to the target stack location one of two values, depending on whether the last `CMP` or `CMPZ` instruction produced a greater-than or equal result.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type      | Size   | Meaning                                                |
 | --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
-| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
-| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 1   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is true      |
+| 2   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is false     |
 | 3   | Input     | Stack Loc | Scalar | Stack location to assign the result to                 |
 
 ```c
     if (flags.GT || flags.EQ)
-        stack[arg3] = signed_value_cast(arg1)
+        stack[arg3] = stack[arg1]
     else
-        stack[arg3] = signed_value_cast(arg2)
+        stack[arg3] = stack[arg2]
 ```
 
 
 ## `ASSIGNCUN`
-Assign to the target stack location one of two immediates, depending on whether the last `CMP` or `CMPZ` instruction produced an unordered result.
+Assign to the target stack location one of two values, depending on whether the last `CMP` or `CMPZ` instruction produced an unordered result.
 
 **Dependencies**: this instruction is only guaranteed to perform as expected if it is immediately preceded by a comparison function (`CMP` or `CMPZ`), or if the only intervening instructions are other `BRANCHCxx` or `ASSIGNCxx` instructions.
 
 | Arg | Direction | Type      | Size   | Meaning                                                |
 | --: | :-------- | :-------- | :----- | :----------------------------------------------------- |
-| 1   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is true  |
-| 2   | Input     | Immediate | SInt16 | Integer immediate to assign if the comparison is false |
+| 1   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is true      |
+| 2   | Input     | Stack Loc | Scalar | Location of value to assign if comparison is false     |
 | 3   | Input     | Stack Loc | Scalar | Stack location to assign the result to                 |
 
 ```c
     if (flags.UN)
-        stack[arg3] = signed_value_cast(arg1)
+        stack[arg3] = stack[arg1]
     else
-        stack[arg3] = signed_value_cast(arg2)
+        stack[arg3] = stack[arg2]
 ```
 
 
