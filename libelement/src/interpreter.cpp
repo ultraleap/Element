@@ -205,7 +205,8 @@ element_result element_instruction_get_size(const element_instruction* instructi
 static int get_max_top_level_input_index(const element::instruction* instruction)
 {
     int result = -1;
-    if (!instruction) return result;
+    if (!instruction)
+        return result;
 
     auto ii = instruction->as<element::instruction_input>();
     if (ii && ii->scope() == 0) {

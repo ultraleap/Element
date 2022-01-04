@@ -72,8 +72,8 @@ static std::vector<char> create_archive(
         const size_t name_len = d.name.length();
         // we need the padded length of the string *without* the length bytes, so -2 at the end
         const size_t name_len_padded = LMNT_ROUND_UP(0x02 + d.name.length() + 1, 4) - 2;
-        buf[idx++] = char((name_len_padded) & 0xFF);
-        buf[idx++] = char(((name_len_padded) >> 8) & 0xFF);
+        buf[idx++] = char((name_len_padded >> 0) & 0xFF);
+        buf[idx++] = char((name_len_padded >> 8) & 0xFF);
 
         memcpy(buf.data() + idx, d.name.data(), name_len);
         idx += name_len;
