@@ -230,7 +230,10 @@ if (ELEMENT_FORCE_FALLBACK_FS)
 endif()
 
 add_library(element ${element_sources})
-set_property(TARGET element PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_target_properties(element PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    CXX_VISIBILITY_PRESET "hidden"
+    C_VISIBILITY_PRESET "hidden")
 target_compile_definitions(element PRIVATE "ELEMENT_EXPORT")
 # make sure we don't add dllimport if building statically
 if (NOT BUILD_SHARED_LIBS)
