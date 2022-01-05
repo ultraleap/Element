@@ -1108,160 +1108,146 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
 
         case LMNT_OP_ASSIGNCEQ:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .dword true_bin
-            |2:
-            | .dword false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             | jp >3
             | jne >3
-            | movss xmm(reg3), dword [<1]
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg1)
+            } else {
+                | reads xmm(reg3), in.arg1
+            }
             | jmp >4
             |3:
-            | movss xmm(reg3), dword [<2]
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg2)
+            } else {
+                | reads xmm(reg3), in.arg2
+            }
             |4:
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
         }
         case LMNT_OP_ASSIGNCNE:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .dword true_bin
-            |2:
-            | .dword false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             | jp >3
             | jne >3
-            | movss xmm(reg3), dword [<2]
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg2)
+            } else {
+                | reads xmm(reg3), in.arg2
+            }
             | jmp >4
             |3:
-            | movss xmm(reg3), dword [<1]
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg1)
+            } else {
+                | reads xmm(reg3), in.arg1
+            }
             |4:
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
         }
         case LMNT_OP_ASSIGNCLT:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .dword true_bin
-            |2:
-            | .dword false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             | jp >3
             | jae >3
-            | movss xmm(reg3), dword [<1]
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg1)
+            } else {
+                | reads xmm(reg3), in.arg1
+            }
             | jmp >4
             |3:
-            | movss xmm(reg3), dword [<2]
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg2)
+            } else {
+                | reads xmm(reg3), in.arg2
+            }
             |4:
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
         }
         case LMNT_OP_ASSIGNCLE:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .dword true_bin
-            |2:
-            | .dword false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             | jp >3
             | ja >3
-            | movss xmm(reg3), dword [<1]
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg1)
+            } else {
+                | reads xmm(reg3), in.arg1
+            }
             | jmp >4
             |3:
-            | movss xmm(reg3), dword [<2]
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg2)
+            } else {
+                | reads xmm(reg3), in.arg2
+            }
             |4:
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
         }
         case LMNT_OP_ASSIGNCGT:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .dword true_bin
-            |2:
-            | .dword false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             | jp >3
             | jbe >3
-            | movss xmm(reg3), dword [<1]
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg1)
+            } else {
+                | reads xmm(reg3), in.arg1
+            }
             | jmp >4
             |3:
-            | movss xmm(reg3), dword [<2]
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg2)
+            } else {
+                | reads xmm(reg3), in.arg2
+            }
             |4:
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
         }
         case LMNT_OP_ASSIGNCGE:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .dword true_bin
-            |2:
-            | .dword false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             | jp >3
             | jb >3
-            | movss xmm(reg3), dword [<1]
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg1)
+            } else {
+                | reads xmm(reg3), in.arg1
+            }
             | jmp >4
             |3:
-            | movss xmm(reg3), dword [<2]
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg2)
+            } else {
+                | reads xmm(reg3), in.arg2
+            }
             |4:
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
         }
         case LMNT_OP_ASSIGNCUN:
         {
-            const lmnt_value true_value = (lmnt_value)((int16_t)in.arg1);
-            const lmnt_value false_value = (lmnt_value)((int16_t)in.arg2);
-            const lmnt_loffset true_bin = *(const lmnt_loffset*)(&true_value);
-            const lmnt_loffset false_bin = *(const lmnt_loffset*)(&false_value);
-            | .rodata
-            |1:
-            | .dword true_bin
-            |2:
-            | .dword false_bin
-            | .code
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             | jp >3
-            | movss xmm(reg3), dword [<2]
+            if (acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg2)
+            } else {
+                | reads xmm(reg3), in.arg2
+            }
             | jmp >4
             |3:
-            | movss xmm(reg3), dword [<1]
+            if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                | movss xmm(reg3), xmm(reg1)
+            } else {
+                | reads xmm(reg3), in.arg1
+            }
             |4:
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;

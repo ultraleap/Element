@@ -168,63 +168,49 @@ LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_branchun(lmnt_ic
 
 LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assignceq(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    const lmnt_value true_val = (lmnt_value)((int16_t)arg1);
-    const lmnt_value false_val = (lmnt_value)((int16_t)arg2);
-    ctx->stack[arg3] = (ctx->status_flags & LMNT_ISTATUS_CMP_EQ) ? true_val : false_val;
+    ctx->stack[arg3] = (ctx->status_flags & LMNT_ISTATUS_CMP_EQ) ? ctx->stack[arg1] : ctx->stack[arg2];
     return LMNT_OK;
 }
 
 
 LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assigncne(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    const lmnt_value true_val = (lmnt_value)((int16_t)arg1);
-    const lmnt_value false_val = (lmnt_value)((int16_t)arg2);
-    ctx->stack[arg3] = !(ctx->status_flags & LMNT_ISTATUS_CMP_EQ) ? true_val : false_val;
+    ctx->stack[arg3] = !(ctx->status_flags & LMNT_ISTATUS_CMP_EQ) ? ctx->stack[arg1] : ctx->stack[arg2];
     return LMNT_OK;
 }
 
 
 LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assignclt(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    const lmnt_value true_val = (lmnt_value)((int16_t)arg1);
-    const lmnt_value false_val = (lmnt_value)((int16_t)arg2);
-    ctx->stack[arg3] = (ctx->status_flags & LMNT_ISTATUS_CMP_LT) ? true_val : false_val;
+    ctx->stack[arg3] = (ctx->status_flags & LMNT_ISTATUS_CMP_LT) ? ctx->stack[arg1] : ctx->stack[arg2];
     return LMNT_OK;
 }
 
 
 LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assigncle(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    const lmnt_value true_val = (lmnt_value)((int16_t)arg1);
-    const lmnt_value false_val = (lmnt_value)((int16_t)arg2);
-    ctx->stack[arg3] = (ctx->status_flags & (LMNT_ISTATUS_CMP_LT | LMNT_ISTATUS_CMP_EQ)) ? true_val : false_val;
+    ctx->stack[arg3] = (ctx->status_flags & (LMNT_ISTATUS_CMP_LT | LMNT_ISTATUS_CMP_EQ)) ? ctx->stack[arg1] : ctx->stack[arg2];
     return LMNT_OK;
 }
 
 
 LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assigncgt(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    const lmnt_value true_val = (lmnt_value)((int16_t)arg1);
-    const lmnt_value false_val = (lmnt_value)((int16_t)arg2);
-    ctx->stack[arg3] = (ctx->status_flags & LMNT_ISTATUS_CMP_GT) ? true_val : false_val;
+    ctx->stack[arg3] = (ctx->status_flags & LMNT_ISTATUS_CMP_GT) ? ctx->stack[arg1] : ctx->stack[arg2];
     return LMNT_OK;
 }
 
 
 LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assigncge(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    const lmnt_value true_val = (lmnt_value)((int16_t)arg1);
-    const lmnt_value false_val = (lmnt_value)((int16_t)arg2);
-    ctx->stack[arg3] = (ctx->status_flags & (LMNT_ISTATUS_CMP_GT | LMNT_ISTATUS_CMP_EQ)) ? true_val : false_val;
+    ctx->stack[arg3] = (ctx->status_flags & (LMNT_ISTATUS_CMP_GT | LMNT_ISTATUS_CMP_EQ)) ? ctx->stack[arg1] : ctx->stack[arg2];
     return LMNT_OK;
 }
 
 
 LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_assigncun(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    const lmnt_value true_val = (lmnt_value)((int16_t)arg1);
-    const lmnt_value false_val = (lmnt_value)((int16_t)arg2);
-    ctx->stack[arg3] = (ctx->status_flags & LMNT_ISTATUS_CMP_UN) ? true_val : false_val;
+    ctx->stack[arg3] = (ctx->status_flags & LMNT_ISTATUS_CMP_UN) ? ctx->stack[arg1] : ctx->stack[arg2];
     return LMNT_OK;
 }
 

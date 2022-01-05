@@ -156,8 +156,8 @@ log_message build_log_error(const source_context* context, const element_ast* as
 
         const auto starts_with_prelude = std::string(msg.get_log_message().filename).rfind("Prelude/", 0) == 0;
         const auto log_ast = starts_with_prelude
-                                 ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
-                                 : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
+            ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
+            : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
 
         if (ast && log_ast)
             msg.append_text("\n---\nAST\n---\n" + ast_to_string(ast->get_root(), 0, ast));

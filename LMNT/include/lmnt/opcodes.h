@@ -115,7 +115,7 @@ enum
     LMNT_OP_BRANCHCGT,
     LMNT_OP_BRANCHCGE,
     LMNT_OP_BRANCHCUN,
-    // conditional assign: immediate, immediate, stack
+    // conditional assign: stack, stack, stack
     LMNT_OP_ASSIGNCEQ,
     LMNT_OP_ASSIGNCNE,
     LMNT_OP_ASSIGNCLT,

@@ -472,6 +472,11 @@ static element_result create_virtual_binary(
     if (arg1_vr->count != 1 || arg2_vr->count != 1)
         return ELEMENT_ERROR_UNKNOWN;
 
+    if (eb.is_comparison_operation()) {
+        ELEMENT_OK_OR_RETURN(state.add_constant(0.0f));
+        ELEMENT_OK_OR_RETURN(state.add_constant(1.0f));
+    }
+
     return ELEMENT_OK;
 }
 
@@ -616,8 +621,12 @@ static element_result compile_binary(
         op = LMNT_OP_ASSIGNCGE;
         goto cmp_operation;
     cmp_operation:
+        uint16_t zero_idx, one_idx;
+        ELEMENT_OK_OR_RETURN(state.find_constant(0.0f, zero_idx));
+        ELEMENT_OK_OR_RETURN(state.find_constant(1.0f, one_idx));
+
         output.emplace_back(lmnt_instruction{ LMNT_OP_CMP, arg1_stack_idx, arg2_stack_idx, 0 });
-        output.emplace_back(lmnt_instruction{ op, 1, 0, stack_idx });
+        output.emplace_back(lmnt_instruction{ op, one_idx, zero_idx, stack_idx });
         return ELEMENT_OK;
 
     default:
@@ -644,12 +653,17 @@ static element_result create_virtual_if(
     stack_allocation* true_vr;
     stack_allocation* false_vr;
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_true().get(), execution_type::conditional));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.if_true().get(), &true_vr));
+    const element::instruction* dep1 = ei.if_true().get();
+    const element::instruction* dep2 = ei.if_false().get();
+    const bool scalar_constant_if = (dep1->is_constant() && dep2->is_constant() && dep1->get_size() == 1 && dep2->get_size() == 1);
+    const execution_type exectype = (scalar_constant_if) ? state.current_context_type() : execution_type::conditional;
+
+    ELEMENT_OK_OR_RETURN(state.push_context(dep1, exectype));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, dep1, &true_vr));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_false().get(), execution_type::conditional));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.if_false().get(), &false_vr));
+    ELEMENT_OK_OR_RETURN(state.push_context(dep2, exectype));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, dep2, &false_vr));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
     if (true_vr->count != false_vr->count)
@@ -665,13 +679,17 @@ static element_result prepare_virtual_if(
     const element::instruction* dep0 = ei.predicate().get();
     const element::instruction* dep1 = ei.if_true().get();
     const element::instruction* dep2 = ei.if_false().get();
+
+    const bool scalar_constant_if = (dep1->is_constant() && dep2->is_constant() && dep1->get_size() == 1 && dep2->get_size() == 1);
+    const execution_type exectype = (scalar_constant_if) ? state.current_context_type() : execution_type::conditional;
+
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
 
-    ELEMENT_OK_OR_RETURN(state.push_context(dep1, execution_type::conditional));
+    ELEMENT_OK_OR_RETURN(state.push_context(dep1, exectype));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep1));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
-    ELEMENT_OK_OR_RETURN(state.push_context(dep2, execution_type::conditional));
+    ELEMENT_OK_OR_RETURN(state.push_context(dep2, exectype));
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep2));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
@@ -689,14 +707,19 @@ static element_result allocate_virtual_if(
     compiler_state& state,
     const element::instruction_if& ei)
 {
+    const element::instruction* dep1 = ei.if_true().get();
+    const element::instruction* dep2 = ei.if_false().get();
+    const bool scalar_constant_if = (dep1->is_constant() && dep2->is_constant() && dep1->get_size() == 1 && dep2->get_size() == 1);
+    const execution_type exectype = (scalar_constant_if) ? state.current_context_type() : execution_type::conditional;
+
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.predicate().get()));
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_true().get(), execution_type::conditional));
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.if_true().get()));
+    ELEMENT_OK_OR_RETURN(state.push_context(dep1, exectype));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, dep1));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_false().get(), execution_type::conditional));
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.if_false().get()));
+    ELEMENT_OK_OR_RETURN(state.push_context(dep2, exectype));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, dep2));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
     return state.allocator->allocate(&ei);
@@ -717,6 +740,9 @@ static element_result compile_if(
     if (!true_vr || !false_vr)
         return ELEMENT_ERROR_UNKNOWN;
 
+    const bool scalar_constant_if = (true_in->is_constant() && false_in->is_constant() && true_vr->count == 1);
+    const execution_type exectype = (scalar_constant_if) ? state.current_context_type() : execution_type::conditional;
+
     uint16_t predicate_stack_idx, true_stack_idx, false_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(predicate_in, predicate_stack_idx));
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(true_in, true_stack_idx));
@@ -726,30 +752,38 @@ static element_result compile_if(
 
     // compile the predicate
     ELEMENT_OK_OR_RETURN(compile_instruction(state, predicate_in, output, flags));
-    // make branch logic
+    // compare predicate to determine execution path
     output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, predicate_stack_idx, 0, 0 });
-    const size_t predicate_branchcle_idx = output.size();
-    output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, 0, 0 }); // target filled in at the end
-    // compile the true branch
-    ELEMENT_OK_OR_RETURN(state.push_context(true_in, execution_type::conditional));
-    ELEMENT_OK_OR_RETURN(compile_instruction(state, true_in, output, flags));
-    ELEMENT_OK_OR_RETURN(state.pop_context());
-    copy_stack_values(true_stack_idx, stack_idx, true_vr->count, output);
-    const size_t branch_past_idx = output.size();
-    output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, 0, 0 }); // target filled in at the end
-    // compile the false branch
-    const size_t false_idx = output.size();
-    ELEMENT_OK_OR_RETURN(state.push_context(false_in, execution_type::conditional));
-    ELEMENT_OK_OR_RETURN(compile_instruction(state, false_in, output, flags));
-    ELEMENT_OK_OR_RETURN(state.pop_context());
-    copy_stack_values(false_stack_idx, stack_idx, false_vr->count, output);
-    const size_t past_idx = output.size();
 
-    // fill in targets for our branches
-    output[predicate_branchcle_idx].arg2 = U16_LO(false_idx);
-    output[predicate_branchcle_idx].arg3 = U16_HI(false_idx);
-    output[branch_past_idx].arg2 = U16_LO(past_idx);
-    output[branch_past_idx].arg3 = U16_HI(past_idx);
+    // if both results are single constants, just do a conditional assign rather than all the messy branching
+    if (scalar_constant_if) {
+        ELEMENT_OK_OR_RETURN(compile_instruction(state, true_in, output, flags));
+        ELEMENT_OK_OR_RETURN(compile_instruction(state, false_in, output, flags));
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNCLE, false_stack_idx, true_stack_idx, stack_idx });
+    } else {
+        const size_t predicate_branchcle_idx = output.size();
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, 0, 0 }); // target filled in at the end
+        // compile the true branch
+        ELEMENT_OK_OR_RETURN(state.push_context(true_in, execution_type::conditional));
+        ELEMENT_OK_OR_RETURN(compile_instruction(state, true_in, output, flags));
+        ELEMENT_OK_OR_RETURN(state.pop_context());
+        copy_stack_values(true_stack_idx, stack_idx, true_vr->count, output);
+        const size_t branch_past_idx = output.size();
+        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, 0, 0 }); // target filled in at the end
+        // compile the false branch
+        const size_t false_idx = output.size();
+        ELEMENT_OK_OR_RETURN(state.push_context(false_in, execution_type::conditional));
+        ELEMENT_OK_OR_RETURN(compile_instruction(state, false_in, output, flags));
+        ELEMENT_OK_OR_RETURN(state.pop_context());
+        copy_stack_values(false_stack_idx, stack_idx, false_vr->count, output);
+        const size_t past_idx = output.size();
+
+        // fill in targets for our branches
+        output[predicate_branchcle_idx].arg2 = U16_LO(false_idx);
+        output[predicate_branchcle_idx].arg3 = U16_HI(false_idx);
+        output[branch_past_idx].arg2 = U16_LO(past_idx);
+        output[branch_past_idx].arg3 = U16_HI(past_idx);
+    }
 
     return ELEMENT_OK;
 }
@@ -762,6 +796,10 @@ static element_result create_virtual_for(
     compiler_state& state,
     const element::instruction_for& ef)
 {
+    // if backbranches aren't allowed we cannot compile a for
+    if (!state.ctx.settings.allow_backbranches)
+        return ELEMENT_ERROR_CANNOT_COMPILE_WITH_CURRENT_SETTINGS;
+
     stack_allocation* initial_vr;
     stack_allocation* condition_vr;
     stack_allocation* body_vr;
@@ -1033,6 +1071,31 @@ static element_result allocate_virtual_select(
     return state.allocator->allocate(&es);
 }
 
+static bool all_options_contiguous_scalar_constants(const compiler_state& state, const element::instruction_select& es)
+{
+    if (es.options_count() == 0)
+        return false;
+    if (!es.options_at(0)->is_constant() || es.options_at(0)->get_size() != 1)
+        return false;
+
+    uint16_t last_stack_idx;
+    if (state.calculate_stack_index(es.options_at(0).get(), last_stack_idx) != ELEMENT_OK)
+        return false;
+
+    for (size_t i = 1; i < es.options_count(); ++i) {
+        if (!es.options_at(i)->is_constant() || es.options_at(i)->get_size() != 1)
+            return false;
+        uint16_t current_stack_idx;
+        if (state.calculate_stack_index(es.options_at(i).get(), current_stack_idx) != ELEMENT_OK)
+            return false;
+        if (current_stack_idx != last_stack_idx + 1)
+            return false;
+        last_stack_idx = current_stack_idx;
+    }
+
+    return true;
+}
+
 static element_result compile_select(
     compiler_state& state,
     const element::instruction_select& es,
@@ -1041,9 +1104,6 @@ static element_result compile_select(
     lmnt_def_flags& flags)
 {
     const size_t opts_size = es.options_count();
-    uint16_t one_idx, last_valid_idx;
-    ELEMENT_OK_OR_RETURN(state.find_constant(1, one_idx));
-    ELEMENT_OK_OR_RETURN(state.find_constant(element_value(opts_size - 1), last_valid_idx));
 
     stack_allocation* selector_vr = state.allocator->get(es.selector().get());
     if (!selector_vr)
@@ -1055,6 +1115,10 @@ static element_result compile_select(
     uint16_t selector_stack_idx;
     ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.selector().get(), selector_stack_idx));
     ELEMENT_OK_OR_RETURN(compile_instruction(state, es.selector().get(), output, flags));
+    // get constants we need for the upcoming check
+    uint16_t one_idx, last_valid_idx;
+    ELEMENT_OK_OR_RETURN(state.find_constant(1, one_idx));
+    ELEMENT_OK_OR_RETURN(state.find_constant(element_value(opts_size - 1), last_valid_idx));
     // clamp to the maximum valid index and truncate
     // we just check <= 0 for each condition so we don't care if it's already < 0
     // note we can't use the selector stack index here as it could be anything (a constant, an input...)
@@ -1062,45 +1126,61 @@ static element_result compile_select(
     output.emplace_back(lmnt_instruction{ LMNT_OP_MINSS, selector_stack_idx, last_valid_idx, selector_scratch_idx });
     output.emplace_back(lmnt_instruction{ LMNT_OP_TRUNCS, selector_scratch_idx, 0, selector_scratch_idx });
 
-    const size_t branches_start_idx = output.size();
-    for (size_t i = 0; i < opts_size; ++i) {
-        output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, selector_scratch_idx, 0, 0 });
-        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, 0, 0 }); // target filled in later
-        output.emplace_back(lmnt_instruction{ LMNT_OP_SUBSS, selector_scratch_idx, one_idx, selector_scratch_idx });
-    }
+    // check if all our options are constants in a contiguous block
+    // if so (and dynamic instructions are allowed), we can just index into them rather than the mess of branching
+    if (state.ctx.settings.allow_dynamic && all_options_contiguous_scalar_constants(state, es)) {
+        // compile everything - if it's all constants this should do nothing
+        for (size_t i = 0; i < opts_size; ++i) {
+            // TODO: use current_context_type once we can cache per-instruction decisions between stages
+            ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
+            ELEMENT_OK_OR_RETURN(compile_instruction(state, es.options_at(i).get(), output, flags));
+            ELEMENT_OK_OR_RETURN(state.pop_context());
+        }
 
-    uint16_t option0_stack_idx;
-    ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options_at(0).get(), option0_stack_idx));
-    const bool stacked = (option0_stack_idx == stack_idx);
+        uint16_t option0_stack_idx;
+        ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options_at(0).get(), option0_stack_idx));
+        output.emplace_back(lmnt_instruction{ LMNT_OP_INDEXRIS, selector_scratch_idx, option0_stack_idx, stack_idx });
+    } else {
+        const size_t branches_start_idx = output.size();
+        for (size_t i = 0; i < opts_size; ++i) {
+            output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, selector_scratch_idx, 0, 0 });
+            output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, 0, 0 }); // target filled in later
+            output.emplace_back(lmnt_instruction{ LMNT_OP_SUBSS, selector_scratch_idx, one_idx, selector_scratch_idx });
+        }
 
-    std::vector<size_t> option_branch_indexes(opts_size);
+        uint16_t option0_stack_idx;
+        ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options_at(0).get(), option0_stack_idx));
+        const bool stacked = (option0_stack_idx == stack_idx);
 
-    for (size_t i = 0; i < opts_size; ++i) {
-        stack_allocation* option_vr = state.allocator->get(es.options_at(i).get());
-        if (!option_vr)
-            return ELEMENT_ERROR_UNKNOWN;
+        std::vector<size_t> option_branch_indexes(opts_size);
 
-        uint16_t option_stack_idx;
-        ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options_at(i).get(), option_stack_idx));
+        for (size_t i = 0; i < opts_size; ++i) {
+            stack_allocation* option_vr = state.allocator->get(es.options_at(i).get());
+            if (!option_vr)
+                return ELEMENT_ERROR_UNKNOWN;
 
-        const size_t option_idx = output.size();
-        // fill in the target index for this branch option
-        output[branches_start_idx + i * 3 + 1].arg2 = U16_LO(option_idx);
-        output[branches_start_idx + i * 3 + 1].arg3 = U16_HI(option_idx);
+            uint16_t option_stack_idx;
+            ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options_at(i).get(), option_stack_idx));
 
-        ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
-        ELEMENT_OK_OR_RETURN(compile_instruction(state, es.options_at(i).get(), output, flags));
-        ELEMENT_OK_OR_RETURN(state.pop_context());
+            const size_t option_idx = output.size();
+            // fill in the target index for this branch option
+            output[branches_start_idx + i * 3 + 1].arg2 = U16_LO(option_idx);
+            output[branches_start_idx + i * 3 + 1].arg3 = U16_HI(option_idx);
 
-        copy_stack_values(option_stack_idx, stack_idx, option_vr->count, output);
-        option_branch_indexes[i] = output.size();
-        output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, 0, 0 }); // target filled in later
-    }
+            ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
+            ELEMENT_OK_OR_RETURN(compile_instruction(state, es.options_at(i).get(), output, flags));
+            ELEMENT_OK_OR_RETURN(state.pop_context());
 
-    const size_t past_idx = output.size();
-    for (size_t i = 0; i < opts_size; ++i) {
-        output[option_branch_indexes[i]].arg2 = U16_LO(past_idx);
-        output[option_branch_indexes[i]].arg3 = U16_HI(past_idx);
+            copy_stack_values(option_stack_idx, stack_idx, option_vr->count, output);
+            option_branch_indexes[i] = output.size();
+            output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, 0, 0 }); // target filled in later
+        }
+
+        const size_t past_idx = output.size();
+        for (size_t i = 0; i < opts_size; ++i) {
+            output[option_branch_indexes[i]].arg2 = U16_LO(past_idx);
+            output[option_branch_indexes[i]].arg3 = U16_HI(past_idx);
+        }
     }
 
     return ELEMENT_OK;

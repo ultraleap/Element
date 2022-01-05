@@ -77,8 +77,7 @@ public:
             auto name = toml::find<std::string>(item.second, "name");
             auto level = toml::find<std::string>(item.second, "level");
             auto index = static_cast<element_result>(std::stoi(item.first.substr(3)));
-            code_map.insert(it, std::pair<element_result, message_code>(
-                                    index, message_code(index, name, level)));
+            code_map.insert(it, std::pair<element_result, message_code>(index, message_code(index, name, level)));
         }
     }
 

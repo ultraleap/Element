@@ -37,8 +37,8 @@ function_declaration::kind get_function_kind(const element_ast* const body, cons
         return function_declaration::kind::intrinsic;
 
     return body->type == ELEMENT_AST_NODE_SCOPE
-               ? function_declaration::kind::scope_bodied
-               : function_declaration::kind::expression_bodied;
+        ? function_declaration::kind::scope_bodied
+        : function_declaration::kind::expression_bodied;
 };
 
 void flatten_ast(element_ast* root, std::vector<const element_ast*>& vec)
@@ -125,10 +125,7 @@ std::unique_ptr<declaration> build_struct_declaration(const element_interpreter_
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     const auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-    auto struct_kind = intrinsic
-                           ? struct_declaration::kind::intrinsic
-                           : struct_declaration::kind::custom;
-
+    auto struct_kind = intrinsic ? struct_declaration::kind::intrinsic : struct_declaration::kind::custom;
     auto struct_decl = std::make_unique<struct_declaration>(identifier(decl->identifier), parent_scope, struct_kind);
     build_inputs_output(context, decl, *struct_decl, output_result, ELEMENT_AST_NODE_STRUCT);
 
@@ -163,10 +160,7 @@ std::unique_ptr<declaration> build_constraint_declaration(const element_interpre
     auto* const decl = ast->children[ast_idx::function::declaration].get();
     const auto intrinsic = decl->has_flag(ELEMENT_AST_FLAG_DECL_INTRINSIC);
 
-    auto constraint_kind = intrinsic
-                               ? constraint_declaration::kind::intrinsic
-                               : constraint_declaration::kind::custom;
-
+    auto constraint_kind = intrinsic ? constraint_declaration::kind::intrinsic : constraint_declaration::kind::custom;
     auto constraint_decl = std::make_unique<constraint_declaration>(identifier(decl->identifier), parent_scope, constraint_kind);
 
     build_inputs_output(context, decl, *constraint_decl, output_result, ELEMENT_AST_NODE_CONSTRAINT);
@@ -237,11 +231,14 @@ std::unique_ptr<declaration> build_function_declaration(const element_interprete
 
     build_inputs_output(context, decl, *function_decl, output_result, ELEMENT_AST_NODE_FUNCTION);
 
+    // clang-format off
     const auto scope_bodied = body->type == ELEMENT_AST_NODE_SCOPE;
-    const auto expression_bodied = body->type == ELEMENT_AST_NODE_CALL
-                                   || body->type == ELEMENT_AST_NODE_LITERAL
-                                   || body->type == ELEMENT_AST_NODE_LAMBDA
-                                   || body->type == ELEMENT_AST_NODE_ANONYMOUS_BLOCK;
+    const auto expression_bodied = (
+        body->type == ELEMENT_AST_NODE_CALL
+        || body->type == ELEMENT_AST_NODE_LITERAL
+        || body->type == ELEMENT_AST_NODE_LAMBDA
+        || body->type == ELEMENT_AST_NODE_ANONYMOUS_BLOCK);
+    // clang-format on
 
     if (scope_bodied) {
         assert(!intrinsic);
