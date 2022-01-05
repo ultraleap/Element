@@ -19,11 +19,12 @@ int main(int argc, char** argv)
     //element_interpreter_set_log_callback(interpreter, log_callback, nullptr);
     element_interpreter_load_prelude(interpreter);
 
-    const char* input_element = "const_int = 5\n"
-                                "struct my_struct(a:Num)\n"
-                                "{\n"
-                                "func(thing:my_struct, val:Num) = thing.a.mul(val)\n"
-                                "}\n";
+    const char* input_element =
+        "const_int = 5\n"
+        "struct my_struct(a:Num)\n"
+        "{\n"
+        "func(thing:my_struct, val:Num) = thing.a.mul(val)\n"
+        "}\n";
 
     element_object* args[1];
     element_object* const_int;

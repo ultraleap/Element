@@ -333,8 +333,7 @@ element_result element_tokeniser_ctx::tokenise_identifier(std::string::iterator&
 
     assert(isid_alpha(c));
 
-    while (it != end
-           && (isid_alnum(UTF8_PEEK_NEXT(it, end)) || UTF8_PEEK_NEXT(it, end) == '_')) {
+    while (it != end && (isid_alnum(UTF8_PEEK_NEXT(it, end)) || UTF8_PEEK_NEXT(it, end) == '_')) {
         c = UTF8_NEXT(it, end);
     }
 

@@ -653,17 +653,17 @@ static element_result create_virtual_if(
     stack_allocation* true_vr;
     stack_allocation* false_vr;
 
-    const bool scalar_constant_if = (
-        ei.if_true()->is_constant() && ei.if_false()->is_constant()
-        && ei.if_true()->get_size() == 1 && ei.if_false()->get_size() == 1);
+    const element::instruction* dep1 = ei.if_true().get();
+    const element::instruction* dep2 = ei.if_false().get();
+    const bool scalar_constant_if = (dep1->is_constant() && dep2->is_constant() && dep1->get_size() == 1 && dep2->get_size() == 1);
     const execution_type exectype = (scalar_constant_if) ? state.current_context_type() : execution_type::conditional;
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_true().get(), exectype));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.if_true().get(), &true_vr));
+    ELEMENT_OK_OR_RETURN(state.push_context(dep1, exectype));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, dep1, &true_vr));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_false().get(), exectype));
-    ELEMENT_OK_OR_RETURN(create_virtual_result(state, ei.if_false().get(), &false_vr));
+    ELEMENT_OK_OR_RETURN(state.push_context(dep2, exectype));
+    ELEMENT_OK_OR_RETURN(create_virtual_result(state, dep2, &false_vr));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
     if (true_vr->count != false_vr->count)
@@ -680,9 +680,7 @@ static element_result prepare_virtual_if(
     const element::instruction* dep1 = ei.if_true().get();
     const element::instruction* dep2 = ei.if_false().get();
 
-    const bool scalar_constant_if = (
-        dep1->is_constant() && dep2->is_constant()
-        && dep1->get_size() == 1 && dep2->get_size() == 1);
+    const bool scalar_constant_if = (dep1->is_constant() && dep2->is_constant() && dep1->get_size() == 1 && dep2->get_size() == 1);
     const execution_type exectype = (scalar_constant_if) ? state.current_context_type() : execution_type::conditional;
 
     ELEMENT_OK_OR_RETURN(prepare_virtual_result(state, dep0));
@@ -709,19 +707,19 @@ static element_result allocate_virtual_if(
     compiler_state& state,
     const element::instruction_if& ei)
 {
-    const bool scalar_constant_if = (
-        ei.if_true()->is_constant() && ei.if_false()->is_constant()
-        && ei.if_true()->get_size() == 1 && ei.if_false()->get_size() == 1);
+    const element::instruction* dep1 = ei.if_true().get();
+    const element::instruction* dep2 = ei.if_false().get();
+    const bool scalar_constant_if = (dep1->is_constant() && dep2->is_constant() && dep1->get_size() == 1 && dep2->get_size() == 1);
     const execution_type exectype = (scalar_constant_if) ? state.current_context_type() : execution_type::conditional;
 
     ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.predicate().get()));
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_true().get(), exectype));
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.if_true().get()));
+    ELEMENT_OK_OR_RETURN(state.push_context(dep1, exectype));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, dep1));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
-    ELEMENT_OK_OR_RETURN(state.push_context(ei.if_false().get(), exectype));
-    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, ei.if_false().get()));
+    ELEMENT_OK_OR_RETURN(state.push_context(dep2, exectype));
+    ELEMENT_OK_OR_RETURN(allocate_virtual_result(state, dep2));
     ELEMENT_OK_OR_RETURN(state.pop_context());
 
     return state.allocator->allocate(&ei);
@@ -761,7 +759,7 @@ static element_result compile_if(
     if (scalar_constant_if) {
         ELEMENT_OK_OR_RETURN(compile_instruction(state, true_in, output, flags));
         ELEMENT_OK_OR_RETURN(compile_instruction(state, false_in, output, flags));
-        output.emplace_back(lmnt_instruction { LMNT_OP_ASSIGNCLE, false_stack_idx, true_stack_idx, stack_idx });
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNCLE, false_stack_idx, true_stack_idx, stack_idx });
     } else {
         const size_t predicate_branchcle_idx = output.size();
         output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, 0, 0 }); // target filled in at the end
@@ -1141,7 +1139,7 @@ static element_result compile_select(
 
         uint16_t option0_stack_idx;
         ELEMENT_OK_OR_RETURN(state.calculate_stack_index(es.options_at(0).get(), option0_stack_idx));
-        output.emplace_back(lmnt_instruction { LMNT_OP_INDEXRIS, selector_scratch_idx, option0_stack_idx, stack_idx });
+        output.emplace_back(lmnt_instruction{ LMNT_OP_INDEXRIS, selector_scratch_idx, option0_stack_idx, stack_idx });
     } else {
         const size_t branches_start_idx = output.size();
         for (size_t i = 0; i < opts_size; ++i) {

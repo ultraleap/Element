@@ -67,8 +67,8 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     src_context->file_info[data] = std::move(info);
 
     const auto log_tokens = starts_with_prelude
-                                ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
-                                : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
+        ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_tokens)
+        : flag_set(logging_bitmask, log_flags::debug | log_flags::output_tokens);
 
     if (log_tokens) {
         log("\n------\nTOKENS\n------\n" + tokens_to_string(tokeniser));
@@ -83,8 +83,8 @@ element_result element_interpreter_ctx::load_into_scope(const char* str, const c
     ELEMENT_OK_OR_RETURN(result);
 
     const auto log_ast = starts_with_prelude
-                             ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
-                             : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
+        ? flag_set(logging_bitmask, log_flags::output_prelude) && flag_set(logging_bitmask, log_flags::output_ast)
+        : flag_set(logging_bitmask, log_flags::debug | log_flags::output_ast);
 
     if (log_ast) {
         log("\n---\nAST\n---\n" + ast_to_string(parser.root));

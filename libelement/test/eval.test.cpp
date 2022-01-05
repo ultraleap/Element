@@ -537,13 +537,14 @@ TEST_CASE("Interpreter", "[Evaluate]")
                 output.values = outputs;
                 output.count = 3;
 
-                char source[] = "struct Vector3(x:Num, y:Num, z:Num) {}\n"
-                                "struct Quaternion(scalar:Num, vector:Vector3) {}\n"
-                                "evaluate(q:Quaternion):Vector3\n"
-                                "{\n"
-                                "    scale(vec:Vector3, s:Num) = Vector3(vec.x.mul(s), vec.y.mul(s), vec.z.mul(s))\n"
-                                "    return = scale(q.vector, q.scalar)\n"
-                                "}\n";
+                char source[] =
+                    "struct Vector3(x:Num, y:Num, z:Num) {}\n"
+                    "struct Quaternion(scalar:Num, vector:Vector3) {}\n"
+                    "evaluate(q:Quaternion):Vector3\n"
+                    "{\n"
+                    "    scale(vec:Vector3, s:Num) = Vector3(vec.x.mul(s), vec.y.mul(s), vec.z.mul(s))\n"
+                    "    return = scale(q.vector, q.scalar)\n"
+                    "}\n";
 
                 result = eval_with_inputs(source, &input, &output);
 
@@ -3320,16 +3321,16 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    char source[] = ""
-                                    "struct test(value:Num)\n"
-                                    "evaluate(a:Num):Num\n"
-                                    "{\n"
-                                    "   nested_predicate(input:Num):Bool = input.lt(20)\n"
-                                    "   nested_body(input:Num):Num = input.add(1)\n"
-                                    "   body(input:test):test = test(input.value.add(for(a, nested_predicate, nested_body)))\n"
-                                    "   predicate(input:test):Bool = input.value.lt(200)\n"
-                                    "   return = for(test(a), predicate, body).value\n"
-                                    "}\n";
+                    char source[] =
+                        "struct test(value:Num)\n"
+                        "evaluate(a:Num):Num\n"
+                        "{\n"
+                        "   nested_predicate(input:Num):Bool = input.lt(20)\n"
+                        "   nested_body(input:Num):Num = input.add(1)\n"
+                        "   body(input:test):test = test(input.value.add(for(a, nested_predicate, nested_body)))\n"
+                        "   predicate(input:test):Bool = input.value.lt(200)\n"
+                        "   return = for(test(a), predicate, body).value\n"
+                        "}\n";
                     result = eval_with_inputs(source, &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
@@ -3347,16 +3348,16 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    char source[] = ""
-                                    "struct test(value:Num)\n"
-                                    "evaluate(a:Num, b:Num):Num\n"
-                                    "{\n"
-                                    "   nested_predicate(input:Num):Bool = input.lt(5)\n"
-                                    "   nested_body(input:Num):Num = input.add(1)\n"
-                                    "   body(input:test):test = test(input.value.add(1))\n"
-                                    "   predicate(input:test):Bool = input.value.lt(b.mul(for(a, nested_predicate, nested_body)))\n"
-                                    "   return = for(test(a), predicate, body).value\n"
-                                    "}\n";
+                    char source[] =
+                        "struct test(value:Num)\n"
+                        "evaluate(a:Num, b:Num):Num\n"
+                        "{\n"
+                        "   nested_predicate(input:Num):Bool = input.lt(5)\n"
+                        "   nested_body(input:Num):Num = input.add(1)\n"
+                        "   body(input:test):test = test(input.value.add(1))\n"
+                        "   predicate(input:test):Bool = input.value.lt(b.mul(for(a, nested_predicate, nested_body)))\n"
+                        "   return = for(test(a), predicate, body).value\n"
+                        "}\n";
                     result = eval_with_inputs(source, &input, &output);
 
                     REQUIRE(result == ELEMENT_OK);
@@ -3374,13 +3375,13 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 2;
 
-                    char source[] = ""
-                                    "evaluate(a:Vector2, b:Vector2):Vector2\n"
-                                    "{\n"
-                                    "   body(input:Vector2):Vector2 = Vector2(input.x.add(a.x), input.y.add(a.y))\n"
-                                    "   predicate(input:Vector2):Bool = input.magnitudeSquared.lt(a.x.add(a.y).add(b.x).sub(a.y))\n"
-                                    "   return = for(a, predicate, body).add(for(b, predicate, body)).add(Vector2(1, 1))\n"
-                                    "}\n";
+                    char source[] =
+                        "evaluate(a:Vector2, b:Vector2):Vector2\n"
+                        "{\n"
+                        "   body(input:Vector2):Vector2 = Vector2(input.x.add(a.x), input.y.add(a.y))\n"
+                        "   predicate(input:Vector2):Bool = input.magnitudeSquared.lt(a.x.add(a.y).add(b.x).sub(a.y))\n"
+                        "   return = for(a, predicate, body).add(for(b, predicate, body)).add(Vector2(1, 1))\n"
+                        "}\n";
                     result = eval_with_inputs(source, &input, &output, "StandardLibrary");
 
                     REQUIRE(result == ELEMENT_OK);
@@ -3404,14 +3405,14 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 2;
 
-                    char source[] = ""
-                                    "list_fold(myList:List, initial_value:Any, someFunc:Binary):Any\n"
-                                    "{\n"
-                                    "   end_of_list(tuple:Any):Bool = tuple.idx.lt(myList.count)\n"
-                                    "   accumulate(tuple:Any):Any = {idx = tuple.idx.add(1), accumulated_value = someFunc(tuple.accumulated_value, myList.at(tuple.idx))}\n"
-                                    "   return:Any = for({idx = 0, accumulated_value = initial_value}, end_of_list, accumulate).accumulated_value\n"
-                                    "}\n"
-                                    "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list_fold(list(a, b, c), start, Num.add)\n";
+                    char source[] =
+                        "list_fold(myList:List, initial_value:Any, someFunc:Binary):Any\n"
+                        "{\n"
+                        "   end_of_list(tuple:Any):Bool = tuple.idx.lt(myList.count)\n"
+                        "   accumulate(tuple:Any):Any = {idx = tuple.idx.add(1), accumulated_value = someFunc(tuple.accumulated_value, myList.at(tuple.idx))}\n"
+                        "   return:Any = for({idx = 0, accumulated_value = initial_value}, end_of_list, accumulate).accumulated_value\n"
+                        "}\n"
+                        "evaluate(a:Num, b:Num, c:Num, start:Num):Num = list_fold(list(a, b, c), start, Num.add)\n";
 
                     result = eval_with_inputs(source, &input, &output, "StandardLibrary");
 
@@ -3430,12 +3431,13 @@ TEST_CASE("Interpreter", "[Evaluate]")
                     output.values = outputs;
                     output.count = 1;
 
-                    char source[] = "scoped_function\n"
-                                    "{\n"
-                                    "anonymous_higher_order(tuple:Any):Any = { somefunc(inner_param:Num) = tuple.somefunc(inner_param).sub(1) }\n"
-                                    "return = anonymous_higher_order(anonymous_higher_order({somefunc(_) = 3}))\n"
-                                    "}\n"
-                                    "evaluate(in0:Num, in1:Num):Num = scoped_function.somefunc(5)";
+                    char source[] =
+                        "scoped_function\n"
+                        "{\n"
+                        "anonymous_higher_order(tuple:Any):Any = { somefunc(inner_param:Num) = tuple.somefunc(inner_param).sub(1) }\n"
+                        "return = anonymous_higher_order(anonymous_higher_order({somefunc(_) = 3}))\n"
+                        "}\n"
+                        "evaluate(in0:Num, in1:Num):Num = scoped_function.somefunc(5)";
 
                     result = eval_with_inputs(source, &input, &output);
 
@@ -3787,11 +3789,12 @@ TEST_CASE("Interpreter", "[Evaluate]")
         }
 
         {
-            char my_vec[] = "struct MyVec(x:Num, y:Num)\n"
-                            "{\n"
-                            "    add(a:MyVec, b:MyVec) = MyVec(a.x.add(b.x), a.y.add(b.y))\n"
-                            "    transform_components(a:MyVec, func) = MyVec(func(a.x), func(a.y), func(a.z))\n"
-                            "}\n";
+            char my_vec[] =
+                "struct MyVec(x:Num, y:Num)\n"
+                "{\n"
+                "    add(a:MyVec, b:MyVec) = MyVec(a.x.add(b.x), a.y.add(b.y))\n"
+                "    transform_components(a:MyVec, func) = MyVec(func(a.x), func(a.y), func(a.z))\n"
+                "}\n";
 
             SECTION("Error - Missing Closing Parenthesis For Call")
             {

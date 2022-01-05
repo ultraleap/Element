@@ -41,16 +41,17 @@ object_const_shared_ptr list_wrapper::create_or_optimise(const element_interpret
     const auto* actual_type = option_objects[0]->get_constraint();
     for (const auto& obj : option_objects) {
         if (obj->get_constraint() != actual_type) {
-            auto error_msg = "All elements within a list must be of the same type, if that list is ever indexed with a runtime value."
-                             "\nnote: The element at index '"
-                             + std::to_string(option_objects.size() - 1)
-                             + "' is of a different type to the first element. The first element of the list is '"
-                             + option_objects[0]->to_string()
-                             + "' but the element at index '"
-                             + std::to_string(option_objects.size() - 1)
-                             + "' is '"
-                             + option_objects.back()->to_string()
-                             + "'.";
+            auto error_msg =
+                "All elements within a list must be of the same type, if that list is ever indexed with a runtime value."
+                "\nnote: The element at index '"
+                + std::to_string(option_objects.size() - 1)
+                + "' is of a different type to the first element. The first element of the list is '"
+                + option_objects[0]->to_string()
+                + "' but the element at index '"
+                + std::to_string(option_objects.size() - 1)
+                + "' is '"
+                + option_objects.back()->to_string()
+                + "'.";
             return std::make_shared<const error>(
                 std::move(error_msg),
                 ELEMENT_ERROR_CONSTRAINT_NOT_SATISFIED,

@@ -70,9 +70,9 @@ bool element_ast::has_flag(element_ast_flags flag) const
 bool element_ast::has_identifier() const
 {
     return type == ELEMENT_AST_NODE_DECLARATION
-           || type == ELEMENT_AST_NODE_IDENTIFIER
-           || type == ELEMENT_AST_NODE_CALL
-           || type == ELEMENT_AST_NODE_PORT;
+        || type == ELEMENT_AST_NODE_IDENTIFIER
+        || type == ELEMENT_AST_NODE_CALL
+        || type == ELEMENT_AST_NODE_PORT;
 }
 
 bool element_ast::has_literal() const

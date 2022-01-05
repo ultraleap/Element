@@ -24,14 +24,11 @@ static const std::unordered_set<std::string> reserved_names{ "return" };
 
 static element_result check_reserved_words(const std::string& text, bool allow_reserved_arg, bool allow_reserved_names)
 {
-    const bool is_not_a_reserved_qualifier = qualifiers.count(text) == 0;
-    const bool is_not_a_reserved_construct = constructs.count(text) == 0;
-    const bool is_not_a_reserved_arg = allow_reserved_arg || reserved_args.count(text) == 0;
-    const bool is_not_a_reserved_name = allow_reserved_names || reserved_names.count(text) == 0;
-    const bool valid = is_not_a_reserved_qualifier
-                       && is_not_a_reserved_construct
-                       && is_not_a_reserved_arg
-                       && is_not_a_reserved_name;
+    const bool is_not_reserved_qualifier = qualifiers.count(text) == 0;
+    const bool is_not_reserved_construct = constructs.count(text) == 0;
+    const bool is_not_reserved_arg = allow_reserved_arg || reserved_args.count(text) == 0;
+    const bool is_not_reserved_name = allow_reserved_names || reserved_names.count(text) == 0;
+    const bool valid = (is_not_reserved_qualifier && is_not_reserved_construct && is_not_reserved_arg && is_not_reserved_name);
 
     return valid ? ELEMENT_OK : ELEMENT_ERROR_RESERVED_IDENTIFIER;
 }

@@ -40,11 +40,12 @@ TEST_CASE("ObjectModel", "[API]")
         std::array<char, 2048> output_buffer_array{};
         auto* output_buffer = output_buffer_array.data();
 
-        const auto* input_element = "const_int = 5\n"
-                                    "struct my_struct(a:Num)\n"
-                                    "{\n"
-                                    "func(thing:my_struct, val:Num) = thing.a.mul(val)\n"
-                                    "}\n";
+        const auto* input_element =
+            "const_int = 5\n"
+            "struct my_struct(a:Num)\n"
+            "{\n"
+            "func(thing:my_struct, val:Num) = thing.a.mul(val)\n"
+            "}\n";
 
         constexpr auto args_count = 1;
         element_object* args[args_count];

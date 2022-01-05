@@ -41,8 +41,7 @@ void check_ast_to_code(std::string input)
     REQUIRE(code == input);
 }
 
-TEST_CASE("AST to Source Code"
-          "[AST_CODE]")
+TEST_CASE("AST to Source Code", "[AST_CODE]")
 {
 
     SECTION("Burger1 = 2.0")
@@ -127,9 +126,10 @@ TEST_CASE("AST to Source Code"
 
     SECTION("Preserve Whitespace")
     {
-        check_ast_to_code("struct myStruct(a:Num)\n"
-                          "{\n"
-                          "    a(b:Num) = b \n"
-                          "}");
+        check_ast_to_code(
+            "struct myStruct(a:Num)\n"
+            "{\n"
+            "    a(b:Num) = b \n"
+            "}");
     }
 }
