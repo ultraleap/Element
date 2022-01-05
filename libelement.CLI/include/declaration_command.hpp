@@ -63,14 +63,14 @@ public:
         }
 
         size_t code_size = 0;
-        result = element_declaration_to_code(decl, custom_arguments.definition, nullptr, &code_size);
+        result = element_declaration_to_code(decl, true, custom_arguments.definition, nullptr, &code_size);
         if (result != ELEMENT_OK) {
             return compiler_message(error_conversion(result),
                 "Failed to convert declaration to code with element_result " + std::to_string(result),
                 compilation_input.get_log_json());
         }
         std::string code(code_size, '\0');
-        result = element_declaration_to_code(decl, custom_arguments.definition, code.data(), &code_size);
+        result = element_declaration_to_code(decl, true, custom_arguments.definition, code.data(), &code_size);
         if (result != ELEMENT_OK) {
             return compiler_message(error_conversion(result),
                 "Failed to convert declaration to code with element_result " + std::to_string(result),

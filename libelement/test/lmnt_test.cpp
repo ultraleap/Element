@@ -208,7 +208,7 @@ int main(int argc, char** argv)
 
     printf("%s", output_buffer);
 
-    result = element_lmnt_compile_function(lmnt_ctx, instruction->instruction, constants, args.size(), lmnt_output);
+    result = element_lmnt_compile_function(lmnt_ctx, instruction->instruction, "evaluate", constants, args.size(), lmnt_output);
     if (result != ELEMENT_OK) {
         printf("RUH ROH: %d\n", result);
         goto cleanup;
@@ -222,7 +222,7 @@ int main(int argc, char** argv)
     printf("Inputs: %zu, outputs: %zu, locals: %zu\n", lmnt_output.inputs_count, lmnt_output.outputs_count, lmnt_output.local_stack_count);
 
     {
-        auto lmnt_archive_data = create_archive("evaluate", uint16_t(args.size()), uint16_t(output.count), uint16_t(lmnt_output.total_stack_count()), constants, lmnt_output.instructions, lmnt_output.flags);
+        auto lmnt_archive_data = create_archive(lmnt_output.name.c_str(), uint16_t(args.size()), uint16_t(output.count), uint16_t(lmnt_output.total_stack_count()), constants, lmnt_output.instructions, lmnt_output.flags);
 
         std::vector<char> lmnt_stack(32768);
         lmnt_ictx lctx;

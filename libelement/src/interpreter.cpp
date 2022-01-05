@@ -202,7 +202,25 @@ element_result element_instruction_get_size(const element_instruction* instructi
     return ELEMENT_OK;
 }
 
-element_result element_instruction_get_inputs_size(const element_instruction* instruction, size_t* size)
+static int get_max_top_level_input_index(const element::instruction* instruction)
+{
+    int result = -1;
+    if (!instruction)
+        return result;
+
+    auto ii = instruction->as<element::instruction_input>();
+    if (ii && ii->scope() == 0) {
+        result = static_cast<int>(ii->index());
+    }
+
+    for (const auto& d : instruction->dependents()) {
+        result = (std::max)(result, get_max_top_level_input_index(d.get()));
+    }
+
+    return result;
+}
+
+element_result element_instruction_get_function_inputs_size(const element_instruction* instruction, size_t* size)
 {
     if (!instruction || !instruction->instruction)
         return ELEMENT_ERROR_API_INSTRUCTION_IS_NULL;
@@ -210,9 +228,7 @@ element_result element_instruction_get_inputs_size(const element_instruction* in
     if (!size)
         return ELEMENT_ERROR_API_OUTPUT_IS_NULL;
 
-    *size = 0;
-    for (const auto& d : instruction->instruction->dependents())
-        *size += d->get_size();
+    *size = static_cast<size_t>(get_max_top_level_input_index(instruction->instruction.get()) + 1);
     return ELEMENT_OK;
 }
 
@@ -340,6 +356,7 @@ element_result element_declaration_get_qualified_name(const element_declaration*
 
 element_result element_declaration_to_code(
     const element_declaration* declaration,
+    bool include_defaults,
     bool include_body,
     char* buffer,
     size_t* buffer_size)
@@ -353,7 +370,7 @@ element_result element_declaration_to_code(
     std::string string;
     auto fdecl = dynamic_cast<const element::function_declaration*>(declaration->decl);
     if (fdecl)
-        string = fdecl->to_code(0, include_body);
+        string = fdecl->to_code(0, include_defaults, include_body);
     else
         string = declaration->decl->to_code(0);
 

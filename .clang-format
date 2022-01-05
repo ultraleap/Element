@@ -86,7 +86,7 @@ JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: true
 MacroBlockBegin: ''
 MacroBlockEnd:   ''
-MaxEmptyLinesToKeep: 1
+MaxEmptyLinesToKeep: 3
 NamespaceIndentation: None
 ObjCBlockIndentWidth: 4
 ObjCSpaceAfterProperty: true

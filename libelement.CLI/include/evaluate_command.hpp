@@ -367,7 +367,7 @@ private:
         lmnt_validation_result lvresult = LMNT_VALIDATION_OK;
         const char* loperation = "nothing ecksdee";
 
-        auto result = element_lmnt_compile_function(lmnt_ctx, instruction->instruction, constants, input.count, lmnt_output);
+        auto result = element_lmnt_compile_function(lmnt_ctx, instruction->instruction, "evaluate", constants, input.count, lmnt_output);
         if (result != ELEMENT_OK) {
             printf("RUH ROH: %d\n", result);
             goto cleanup;

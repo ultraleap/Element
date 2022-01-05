@@ -12,10 +12,10 @@ struct parse_command_arguments
     [[nodiscard]] std::string as_string() const
     {
         std::stringstream ss;
-        ss << "parse ";
+        ss << "parse";
 
         if (no_validation)
-            ss << "--no-validation ";
+            ss << " --no-validation";
 
         return ss.str();
     }
@@ -68,7 +68,7 @@ public:
 
         auto* const command = app.add_subcommand("parse")->fallthrough();
         command->add_flag("--no-validation", arguments->no_validation,
-            "Expression to evaluate.");
+            "Whether to validate the parsed code.");
 
         command->callback([callback, common_arguments, arguments]() {
             parse_command cmd(*common_arguments, *arguments);

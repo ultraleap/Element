@@ -200,6 +200,7 @@ set(element_sources
     "src/lmnt/compiler.hpp"
     "src/lmnt/compiler_state.cpp"
     "src/lmnt/compiler_state.hpp"
+    "src/lmnt/exporter.cpp"
 
     #Util
     "src/stringutil.hpp"
@@ -228,8 +229,16 @@ if (ELEMENT_FORCE_FALLBACK_FS)
     add_definitions(-DELEMENT_FORCE_FALLBACK_FS)
 endif()
 
-add_library(element STATIC ${element_sources})
-set_property(TARGET element PROPERTY POSITION_INDEPENDENT_CODE ON)
+add_library(element ${element_sources})
+set_target_properties(element PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    CXX_VISIBILITY_PRESET "hidden"
+    C_VISIBILITY_PRESET "hidden")
+target_compile_definitions(element PRIVATE "ELEMENT_EXPORT")
+# make sure we don't add dllimport if building statically
+if (NOT BUILD_SHARED_LIBS)
+    target_compile_definitions(element INTERFACE "ELEMENT_STATIC")
+endif ()
 add_library(element::element ALIAS element)
 
 # For VS

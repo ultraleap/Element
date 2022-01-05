@@ -24,7 +24,7 @@ typedef struct element_parser_ctx element_parser_ctx;
  * @return ELEMENT_ERROR_API_TOKENISER_CTX_IS_NULL tokeniser pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL parser pointer is null
  */
-element_result element_parser_create(
+ELEMENT_API element_result element_parser_create(
     element_tokeniser_ctx* tokeniser,
     element_parser_ctx** parser);
 
@@ -33,7 +33,7 @@ element_result element_parser_create(
  *
  * @param[in,out] parser            parser context
  */
-void element_parser_delete(
+ELEMENT_API void element_parser_delete(
     element_parser_ctx** parser);
 
 /**
@@ -46,7 +46,7 @@ void element_parser_delete(
  * @return ELEMENT_ERROR_API_PARSER_CTX_IS_NULL parser pointer is null
  * @return ELEMENT_ERROR_API_OUTPUT_IS_NULL ast node pointer is null
  */
-element_result element_parser_get_ast(
+ELEMENT_API element_result element_parser_get_ast(
     element_parser_ctx* parser,
     element_ast** ast);
 
@@ -58,7 +58,7 @@ element_result element_parser_get_ast(
  * @return ELEMENT_OK ast tree created successfully
  * @return ELEMENT_ERROR_API_PARSER_CTX_IS_NULL parser pointer is null
  */
-element_result element_parser_build_ast(
+ELEMENT_API element_result element_parser_build_ast(
     element_parser_ctx* parser);
 
     #if defined(__cplusplus)
