@@ -7,6 +7,8 @@
 #include <math.h>
 #include <string.h>
 
+// Used by dispatch headers
+void print_execution_context(lmnt_ictx* ctx, lmnt_loffset inst_idx, const lmnt_instruction op);
 
 // We include exactly one dispatch_* header to execute functions
 // Computed GOTOs are faster but only available where GNU C is
