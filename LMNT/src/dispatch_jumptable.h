@@ -57,7 +57,6 @@ LMNT_ATTR_FAST static const lmnt_op_fn lmnt_op_functions[LMNT_OP_END] = {
     lmnt_op_powvs,
     lmnt_op_sqrts,
     lmnt_op_sqrtv,
-    lmnt_op_log,
     lmnt_op_ln,
     lmnt_op_log2,
     lmnt_op_log10,

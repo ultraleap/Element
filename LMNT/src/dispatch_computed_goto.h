@@ -60,7 +60,6 @@ LMNT_ATTR_FAST static lmnt_result execute_function(lmnt_ictx* ctx, const lmnt_co
         &&op_powvs,
         &&op_sqrts,
         &&op_sqrtv,
-        &&op_log,
         &&op_ln,
         &&op_log2,
         &&op_log10,
@@ -181,7 +180,6 @@ GENERATE_OP_NOFAIL(powvv);
 GENERATE_OP_NOFAIL(powvs);
 GENERATE_OP_NOFAIL(sqrts);
 GENERATE_OP_NOFAIL(sqrtv);
-GENERATE_OP_NOFAIL(log);
 GENERATE_OP_NOFAIL(ln);
 GENERATE_OP_NOFAIL(log2);
 GENERATE_OP_NOFAIL(log10);

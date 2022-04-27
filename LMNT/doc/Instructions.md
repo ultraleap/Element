@@ -552,20 +552,6 @@ Performs a square root operation on each value in a 4-wide vector, and stores th
 ```
 
 
-## `LOG`
-Takes the logarithm of a value, also specifying the base, and writes the result.
-
-| Arg | Direction | Type       | Size   | Meaning                                |
-| --: | :-------- | :--------- | :----- | :------------------------------------- |
-| 1   | Input     | Stack Loc  | Scalar | Location of the logarithm input        |
-| 2   | Input     | Stack Loc  | Scalar | Location of the logarithm base         |
-| 3   | Output    | Stack Loc  | Scalar | Stack location to write result to      |
-
-```c
-    stack[arg3] = log(stack[arg1], stack[arg2])
-```
-
-
 ## `LN`
 Takes the natural logarithm of an input value, and writes the result.
 
