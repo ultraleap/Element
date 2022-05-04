@@ -71,7 +71,6 @@ LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_function(lmnt_
         case LMNT_OP_POWVS:     opresult = lmnt_op_powvs(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_SQRTS:     opresult = lmnt_op_sqrts(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_SQRTV:     opresult = lmnt_op_sqrtv(ctx, op.arg1, op.arg2, op.arg3); break;
-        case LMNT_OP_LOG:       opresult = lmnt_op_log(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_LN:        opresult = lmnt_op_ln(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_LOG2:      opresult = lmnt_op_log2(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_LOG10:     opresult = lmnt_op_log10(ctx, op.arg1, op.arg2, op.arg3); break;

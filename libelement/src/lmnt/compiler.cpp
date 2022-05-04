@@ -477,6 +477,21 @@ static element_result create_virtual_binary(
         ELEMENT_OK_OR_RETURN(state.add_constant(1.0f));
     }
 
+    if (eb.operation() == element::instruction_binary::op::log) {
+        element_value log_base;
+        const bool base_const = eb.input2()->get_constant_value(log_base);
+        const bool is_known_base = base_const && (log_base == 2.0f || log_base == 10.0f || log_base == std::exp(1.0f));
+
+        if (base_const && !is_known_base) {
+            // log(n, constant) == log2(n) / log2(constant)
+            element_value log2_constant = log2(log_base);
+            ELEMENT_OK_OR_RETURN(state.add_constant(log2_constant));
+        } else if (!base_const) {
+            // allocate a space for the base calculation
+            state.allocator->add(&eb, 1);
+        }
+    }
+
     return ELEMENT_OK;
 }
 
@@ -556,7 +571,8 @@ static element_result compile_binary(
     case element::instruction_binary::op::log: {
         // check if we've got a constant base we can work with
         element_value base_value = 0.0f;
-        if (arg2_in->get_constant_value(base_value)) {
+        const bool base_const = arg2_in->get_constant_value(base_value);
+        if (base_const) {
             if (base_value == 2.0f) {
                 output.emplace_back(lmnt_instruction{ LMNT_OP_LOG2, arg1_stack_idx, 0, stack_idx });
                 return ELEMENT_OK;
@@ -566,9 +582,21 @@ static element_result compile_binary(
             } else if (base_value == std::exp(1.0f)) {
                 output.emplace_back(lmnt_instruction{ LMNT_OP_LN, arg1_stack_idx, 0, stack_idx });
                 return ELEMENT_OK;
+            } else {
+                // log(x, const) = log2(x) / log2(const)
+                uint16_t base_idx = 0;
+                ELEMENT_OK_OR_RETURN(state.find_constant(log2(base_value), base_idx));
+                output.emplace_back(lmnt_instruction{ LMNT_OP_LOG2, arg1_stack_idx, 0, stack_idx });
+                output.emplace_back(lmnt_instruction{ LMNT_OP_DIVSS, stack_idx, base_idx, stack_idx });
+                return ELEMENT_OK;
             }
         }
-        output.emplace_back(lmnt_instruction{ LMNT_OP_LOG, arg1_stack_idx, arg2_stack_idx, stack_idx });
+        // log(x, b) == log2(x) / log2(b)
+        uint16_t base_scratch_idx = 0;
+        ELEMENT_OK_OR_RETURN(state.calculate_stack_index(&eb, base_scratch_idx, 1));
+        output.emplace_back(lmnt_instruction{ LMNT_OP_LOG2, arg2_stack_idx, 0, base_scratch_idx });
+        output.emplace_back(lmnt_instruction{ LMNT_OP_LOG2, arg1_stack_idx, 0, stack_idx });
+        output.emplace_back(lmnt_instruction{ LMNT_OP_DIVSS, stack_idx, base_scratch_idx, stack_idx });
         return ELEMENT_OK;
     }
 

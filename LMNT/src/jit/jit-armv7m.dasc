@@ -732,48 +732,6 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_ABSV:
             | mathv1serial vabs.f32
             break;
-        case LMNT_OP_LOG:
-            if (acquireScalarRegisterOrLoad(state, in.arg1, &reg1, ACCESSTYPE_READ, 0)) {
-                | vmov.f32 s0, s(reg1)
-            }
-            platformWriteAndEvictVolatile(state);
-            |.rodata
-            |1:
-            | .long (intptr_t)(&logf)
-            |.code
-            | ldr r1, <1
-            | blx r1
-            | vpush {s0-s0}
-            | reads 0, in.arg2
-            // check for arg2 == 0
-            | vcmpz.f32 s0
-            | vmrs
-            | beq >2
-            // otherwise run logf
-            | ldr r1, <1
-            | blx r1
-            | vpop {s1-s1}
-            if (acquireScalarRegister(state, in.arg3, &reg3, ACCESSTYPE_WRITE)) {
-                | vdiv.f32 s(reg3), s1, s0
-                notifyRegisterWritten(state, reg3, 1);
-            } else {
-                | vdiv.f32 s1, s1, s0
-                | writes in.arg3, 1
-            }
-            | b >3
-            // if arg2 == 0, write a NaN
-            |2:
-            | vpop {s1-s1}
-            if (acquireScalarRegister(state, in.arg3, &reg3, ACCESSTYPE_WRITE)) {
-                | vldr s(reg3), ->nanbits
-                notifyRegisterWritten(state, reg3, 1);
-            } else {
-                | vldr s1, ->nanbits
-                | writes in.arg3, 1
-            }
-            |3:
-            ||rmode = RMODE_UNKNOWN;
-            break;
         case LMNT_OP_LN:
             | extern1 logf, 0, in.arg3, reg3
             break;

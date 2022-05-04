@@ -207,7 +207,6 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     case LMNT_OP_DIVSS:
     case LMNT_OP_MODSS:
     case LMNT_OP_POWSS:
-    case LMNT_OP_LOG:
     case LMNT_OP_MINSS:
     case LMNT_OP_MAXSS:
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
