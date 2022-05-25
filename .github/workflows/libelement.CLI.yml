@@ -28,13 +28,13 @@ jobs:
             generators: "Ninja",
           }
         - {
-            name: "windows-msvc-vs2019",
-            os: windows-latest,
+            name: "windows-msvc-vs2022",
+            os: windows-2022,
             build_type: "Release",
             cc: "cl",
             cxx: "cl",
-            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
-            generators: "Visual Studio 16 2019"
+            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+            generators: "Visual Studio 17 2022"
           }
         - {
             name: "macos-clang",
