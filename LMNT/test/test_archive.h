@@ -16,7 +16,7 @@ static void test_archive_backbranches(void)
         LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x02, 0x00, 0x02),
         LMNT_OP_BYTES(LMNT_OP_CMP, 0x02, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCLT, 0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x10, 0x00, 0x03),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x4180, 0x03), // 16
         1.0, 5.0
     );
     test_function_data fndata = { NULL, NULL };
@@ -38,7 +38,7 @@ static void test_archive_backbranches(void)
         LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x02, 0x00, 0x02),
         LMNT_OP_BYTES(LMNT_OP_CMP, 0x02, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCLT, 0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x10, 0x00, 0x03),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x4180, 0x03), // 16
         1.0, 5.0
     );
     TEST_LOAD_ARCHIVE_FAILS_VALIDATION(ctx, "test", a, fndata, LMNT_ERROR_INVALID_ARCHIVE, LMNT_VERROR_DEF_FLAGS);
@@ -52,7 +52,7 @@ static void test_archive_backbranches(void)
         LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x02, 0x00, 0x02),
         LMNT_OP_BYTES(LMNT_OP_CMP, 0x02, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCLT, 0x00, 0x03, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x10, 0x00, 0x03),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x4180, 0x03), // 16
         1.0, 5.0
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);

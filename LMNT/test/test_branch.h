@@ -17,9 +17,9 @@ static void test_branch(void)
 
     archive a = create_archive_array("test", 0, 1, 1, 4, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_BRANCH,    0x00, 0x03, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x00), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x00) // 5
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
@@ -32,11 +32,11 @@ static void test_branch(void)
 
     // test "one past the end" branch
     a = create_archive_array("test", 0, 1, 1, 5, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x03, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x4040, 0x00), // 3
         LMNT_OP_BYTES(LMNT_OP_BRANCH,    0x00, 0x05, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x00), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x00)  // 5
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
@@ -48,22 +48,22 @@ static void test_branch(void)
 
 
     a = create_archive_array("test", 0, 1, 1, 16, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0xFF, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x437F, 0x00), // 255
         LMNT_OP_BYTES(LMNT_OP_BRANCH,    0x00, 0x0C, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x00), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x44, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x4288, 0x00), // 68
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x34, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x4250, 0x00), // 52
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x24, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x4210, 0x00), // 36
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x14, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x41A0, 0x00), // 20
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x04, 0x00, 0x00),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x4080, 0x00), // 4
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x16, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x26, 0x00, 0x00)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x41B0, 0x00), // 22
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x4218, 0x00)  // 38
     );
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
     delete_archive_array(a);
@@ -91,9 +91,9 @@ static void test_branchceq(void)
     archive a = create_archive_array("test", 2, 1, 3, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCEQ, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x02),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x02), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x02) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -147,9 +147,9 @@ static void test_branchcne(void)
     archive a = create_archive_array("test", 2, 1, 3, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCNE, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x02),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x02), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x02) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -203,9 +203,9 @@ static void test_branchclt(void)
     archive a = create_archive_array("test", 2, 1, 3, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCLT, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x02),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x02), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x02) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -267,9 +267,9 @@ static void test_branchcle(void)
     archive a = create_archive_array("test", 2, 1, 3, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCLE, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x02),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x02), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x02) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -331,9 +331,9 @@ static void test_branchcgt(void)
     archive a = create_archive_array("test", 2, 1, 3, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCGT, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x02),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x02), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x02) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -395,9 +395,9 @@ static void test_branchcge(void)
     archive a = create_archive_array("test", 2, 1, 3, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCGE, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x02),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x02), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x02) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -459,9 +459,9 @@ static void test_branchcun(void)
     archive a = create_archive_array("test", 2, 1, 3, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCUN, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x02),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x02), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x02) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -515,9 +515,9 @@ static void test_branchz(void)
     archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHZ,   0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x01), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x01) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -567,9 +567,9 @@ static void test_branchnz(void)
     archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHNZ,  0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x01), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x01) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -619,9 +619,9 @@ static void test_branchpos(void)
     archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHPOS, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x01), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x01) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -679,9 +679,9 @@ static void test_branchneg(void)
     archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHNEG, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x01), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x01) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -739,9 +739,9 @@ static void test_branchun(void)
     archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMP,       0x00, 0x01, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHUN,  0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x01), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x01) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -801,9 +801,9 @@ static void test_branchceq_cmpz(void)
     archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCEQ, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x01), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x01) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -844,9 +844,9 @@ static void test_branchcne_cmpz(void)
     archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCNE, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x01), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x01) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -887,9 +887,9 @@ static void test_branchclt_cmpz(void)
     archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCLT, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x01), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x01) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -938,9 +938,9 @@ static void test_branchcle_cmpz(void)
     archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCLE, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x01), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x01) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -989,9 +989,9 @@ static void test_branchcgt_cmpz(void)
     archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCGT, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x01), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x01) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -1036,9 +1036,9 @@ static void test_branchcge_cmpz(void)
     archive a = create_archive_array("test", 1, 1, 2, 5, 0, 0,
         LMNT_OP_BYTES(LMNT_OP_CMPZ,      0x00, 0x00, 0x00),
         LMNT_OP_BYTES(LMNT_OP_BRANCHCGE, 0x00, 0x04, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x01, 0x00, 0x01),
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, 0x01), // 1
         LMNT_OP_BYTES(LMNT_OP_RETURN,    0x00, 0x00, 0x00),
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x05, 0x00, 0x01)
+        LMNT_OP_BYTES(LMNT_OP_ASSIGNIBS, 0x0000, 0x40A0, 0x01) // 5
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);

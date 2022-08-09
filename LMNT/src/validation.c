@@ -167,12 +167,10 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 4, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
     // immlo, immhi, stack
-    case LMNT_OP_ASSIGNIIS:
     case LMNT_OP_ASSIGNIBS:
         LMNT_V_OK_OR_RETURN(validate_operand_immediate32(archive, def, arg1, arg2, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
-    case LMNT_OP_ASSIGNIIV:
     case LMNT_OP_ASSIGNIBV:
         LMNT_V_OK_OR_RETURN(validate_operand_immediate32(archive, def, arg1, arg2, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 4, constants_count, rw_stack_count));

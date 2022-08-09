@@ -28,9 +28,7 @@ LMNT_ATTR_FAST static lmnt_result execute_function(lmnt_ictx* ctx, const lmnt_co
         &&op_assignss,
         &&op_assignvv,
         &&op_assignsv,
-        &&op_assigniis,
         &&op_assignibs,
-        &&op_assigniiv,
         &&op_assignibv,
         &&op_dloadiis,
         &&op_dloadiiv,
@@ -149,9 +147,7 @@ op_return:
 GENERATE_OP_NOFAIL(assignss);
 GENERATE_OP_NOFAIL(assignvv);
 GENERATE_OP_NOFAIL(assignsv);
-GENERATE_OP_NOFAIL(assigniis);
 GENERATE_OP_NOFAIL(assignibs);
-GENERATE_OP_NOFAIL(assigniiv);
 GENERATE_OP_NOFAIL(assignibv);
 GENERATE_OP(dloadiis, dispatch);
 GENERATE_OP(dloadiiv, dispatch);
