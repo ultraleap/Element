@@ -379,10 +379,10 @@ static void test_divvv(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
-static void test_modvv(void)
+static void test_remvv(void)
 {
     archive a = create_archive_array("test", 8, 4, 12, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_MODVV, 0x00, 0x04, 0x08)
+        LMNT_OP_BYTES(LMNT_OP_REMVV, 0x00, 0x04, 0x08)
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -413,10 +413,10 @@ static void test_modvv(void)
         -5.1f, -7.1f, -5.1f, -7.1f,
         3.0f, 3.0f, 3.0f, 3.0f);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], -2.1, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[1], -1.1, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[2], -2.1, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[3], -1.1, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 0.9, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[1], 1.9, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[2], 0.9, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[3], 1.9, FLOAT_ERROR_MARGIN);
 
     TEST_UPDATE_ARGS(ctx, fndata, 0,
     -5.1f, -7.1f, -5.1f, -7.1f,
@@ -431,10 +431,10 @@ static void test_modvv(void)
         1.0f, 2.0f, 4.0f, 5.0f,
         -3.0f, -3.0f, -3.0f, -3.0f);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[1], 2.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[2], 1.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[3], 2.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], -2.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[1], -1.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[2], -2.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[3], -1.0, FLOAT_ERROR_MARGIN);
 
     TEST_UPDATE_ARGS(ctx, fndata, 0,
         2.5f, 3.5f, 2.5f, 3.5f,
@@ -714,7 +714,7 @@ MAKE_REGISTER_SUITE_FUNCTION(maths_vector,
     CUNIT_CI_TEST(test_subvv),
     CUNIT_CI_TEST(test_mulvv),
     CUNIT_CI_TEST(test_divvv),
-    CUNIT_CI_TEST(test_modvv),
+    CUNIT_CI_TEST(test_remvv),
     CUNIT_CI_TEST(test_powvv),
     CUNIT_CI_TEST(test_powvs),
     CUNIT_CI_TEST(test_sqrtv),

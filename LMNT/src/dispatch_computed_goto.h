@@ -43,8 +43,8 @@ LMNT_ATTR_FAST static lmnt_result execute_function(lmnt_ictx* ctx, const lmnt_co
         &&op_mulvv,
         &&op_divss,
         &&op_divvv,
-        &&op_modss,
-        &&op_modvv,
+        &&op_remss,
+        &&op_remvv,
         &&op_sin,
         &&op_cos,
         &&op_tan,
@@ -161,8 +161,8 @@ GENERATE_OP_NOFAIL(mulss);
 GENERATE_OP_NOFAIL(mulvv);
 GENERATE_OP_NOFAIL(divss);
 GENERATE_OP_NOFAIL(divvv);
-GENERATE_OP_NOFAIL(modss);
-GENERATE_OP_NOFAIL(modvv);
+GENERATE_OP_NOFAIL(remss);
+GENERATE_OP_NOFAIL(remvv);
 GENERATE_OP_NOFAIL(sin);
 GENERATE_OP_NOFAIL(cos);
 GENERATE_OP_NOFAIL(tan);

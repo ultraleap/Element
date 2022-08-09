@@ -13,6 +13,7 @@
 #include "jit/hosthelpers.h"
 #include "jit/targethelpers-arm.h" // includes dasm_proto
 #include "jit/reghelpers-arm-vfp.h"
+#include "jit/op_impls.h"
 #include LMNT_MEMORY_HEADER
 
 | .arch armv7m
@@ -634,17 +635,17 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | mathv2serial vdiv.f32
             break;
 
-        case LMNT_OP_MODSS:
+        case LMNT_OP_REMSS:
             // call to C
-            | extern2 fmodf, 0, 0, 0
+            | extern2 remss, 0, 0, 0
             break;
-        case LMNT_OP_MODVV:
+        case LMNT_OP_REMVV:
         {
             // call to C
-            | extern2 fmodf, 0, 0, 0
-            | extern2 fmodf, 1, 1, 1
-            | extern2 fmodf, 2, 2, 2
-            | extern2 fmodf, 3, 3, 3
+            | extern2 remss, 0, 0, 0
+            | extern2 remss, 1, 1, 1
+            | extern2 remss, 2, 2, 2
+            | extern2 remss, 3, 3, 3
             break;
         }
 

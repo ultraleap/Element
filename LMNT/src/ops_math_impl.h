@@ -69,18 +69,18 @@ LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_divvv(lmnt_ictx*
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_modss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_remss(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    ctx->stack[arg3] = fmodf(ctx->stack[arg1], ctx->stack[arg2]);
+    ctx->stack[arg3] = ctx->stack[arg1] - floorf(ctx->stack[arg1] / ctx->stack[arg2]) * ctx->stack[arg2];
     return LMNT_OK;
 }
 
-LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_modvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
+LMNT_ATTR_FAST static inline LMNT_INLINE_OP lmnt_result lmnt_op_remvv(lmnt_ictx* ctx, lmnt_offset arg1, lmnt_offset arg2, lmnt_offset arg3)
 {
-    ctx->stack[arg3 + 0] = fmodf(ctx->stack[arg1 + 0], ctx->stack[arg2 + 0]);
-    ctx->stack[arg3 + 1] = fmodf(ctx->stack[arg1 + 1], ctx->stack[arg2 + 1]);
-    ctx->stack[arg3 + 2] = fmodf(ctx->stack[arg1 + 2], ctx->stack[arg2 + 2]);
-    ctx->stack[arg3 + 3] = fmodf(ctx->stack[arg1 + 3], ctx->stack[arg2 + 3]);
+    ctx->stack[arg3 + 0] = ctx->stack[arg1 + 0] - floorf(ctx->stack[arg1 + 0] / ctx->stack[arg2 + 0]) * ctx->stack[arg2 + 0];
+    ctx->stack[arg3 + 1] = ctx->stack[arg1 + 1] - floorf(ctx->stack[arg1 + 1] / ctx->stack[arg2 + 1]) * ctx->stack[arg2 + 1];
+    ctx->stack[arg3 + 2] = ctx->stack[arg1 + 2] - floorf(ctx->stack[arg1 + 2] / ctx->stack[arg2 + 2]) * ctx->stack[arg2 + 2];
+    ctx->stack[arg3 + 3] = ctx->stack[arg1 + 3] - floorf(ctx->stack[arg1 + 3] / ctx->stack[arg2 + 3]) * ctx->stack[arg2 + 3];
     return LMNT_OK;
 }
 

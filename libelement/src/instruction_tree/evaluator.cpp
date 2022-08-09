@@ -282,7 +282,7 @@ element_value element_evaluate_binary(element::instruction_binary::op op, elemen
     case element::instruction_binary::op::pow:
         return std::pow(a, b);
     case element::instruction_binary::op::rem:
-        return std::fmod(a, b);
+        return a - std::floor(a/b) * b;
     case element::instruction_binary::op::sub:
         return a - b;
 

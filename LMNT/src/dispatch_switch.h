@@ -54,8 +54,8 @@ LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_function(lmnt_
         case LMNT_OP_MULVV:     opresult = lmnt_op_mulvv(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_DIVSS:     opresult = lmnt_op_divss(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_DIVVV:     opresult = lmnt_op_divvv(ctx, op.arg1, op.arg2, op.arg3); break;
-        case LMNT_OP_MODSS:     opresult = lmnt_op_modss(ctx, op.arg1, op.arg2, op.arg3); break;
-        case LMNT_OP_MODVV:     opresult = lmnt_op_modvv(ctx, op.arg1, op.arg2, op.arg3); break;
+        case LMNT_OP_REMSS:     opresult = lmnt_op_remss(ctx, op.arg1, op.arg2, op.arg3); break;
+        case LMNT_OP_REMVV:     opresult = lmnt_op_remvv(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_SIN:       opresult = lmnt_op_sin(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_COS:       opresult = lmnt_op_cos(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_TAN:       opresult = lmnt_op_tan(ctx, op.arg1, op.arg2, op.arg3); break;

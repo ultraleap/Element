@@ -16,6 +16,7 @@
 #include "jit/hosthelpers.h"
 #include "jit/targethelpers-x86.h" // includes dasm_proto
 #include "jit/reghelpers-x86.h"
+#include "jit/op_impls.h"
 #include LMNT_MEMORY_HEADER
 
 
@@ -558,84 +559,49 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | mathv2 divps
             break;
 
-        case LMNT_OP_MODSS:
+        case LMNT_OP_REMSS:
         {
-            bool arg1hasreg = acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
-            bool arg2hasreg = acquireScalarRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
-            if (arg1hasreg) {
-                | movss xmm(xmmtmp1), xmm(reg1)
-            } else {
-                | reads xmm(xmmtmp1), in.arg1
-            }
-            if (!arg2hasreg) {
-                | reads xmm(xmmtmp2), in.arg2
-                ||reg2 = xmmtmp2;
-            }
-            | divss xmm(xmmtmp1), xmm(reg2)
-            // NaN check: also gather infinities
-            | movss xmm(xmmtmp2), dword [->inftonanbits]
-            | orps xmm(xmmtmp2), xmm(xmmtmp1)
-            | cmpss xmm(xmmtmp2), xmm(xmmtmp1), 0x3  // CMPUNORDSS
-            // float -> int -> float (stick to vector versions, faster)
-            | cvttps2dq xmm(xmmtmp1), xmm(xmmtmp1)
-            | cvtdq2ps xmm(xmmtmp1), xmm(xmmtmp1)
-            // reintroduce any NaNs
-            | andps xmm(xmmtmp2), oword [->nanbits]
-            | orps xmm(xmmtmp1), xmm(xmmtmp2)
-            // if we wiped out arg2 due to the NaN check, re-read it
-            ||if (reg2 == xmmtmp2) {
-                | reads xmm(xmmtmp2), in.arg2
-            ||}
-            | mulss xmm(xmmtmp1), xmm(reg2)
-            // we can now reuse xmmtmp2 if needed
-            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp2);
-            if (arg1hasreg) {
-                | movss xmm(reg3), xmm(reg1)
-            } else {
+            if (state->cpuflags & SIMD_X86_SSE41) {
+                ||acquireScalarRegisterOrLoad(state, in.arg2, &reg2, ACCESSTYPE_READ, xmmtmp2);
+                if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                    | movss xmm(xmmtmp1), xmm(reg1)
+                } else {
+                    | reads xmm(xmmtmp1), in.arg1
+                }
+                | divss xmm(xmmtmp1), xmm(reg2)
+                | roundss xmm(xmmtmp1), xmm(xmmtmp1), 0x01
+                | mulss xmm(xmmtmp1), xmm(reg2)
+                ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp2);
                 | reads xmm(reg3), in.arg1
+                | subss xmm(reg3), xmm(xmmtmp1)
+                | writes_or_notify reg3, in.arg3, xmmtmp1
+            } else {
+                | extern2 remss, 0, 0, 0
             }
-            | subss xmm(reg3), xmm(xmmtmp1)
-            | writes_or_notify reg3, in.arg3, xmmtmp2
             break;
         }
-        case LMNT_OP_MODVV:
+        case LMNT_OP_REMVV:
         {
-            bool arg1hasreg = acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ);
-            bool arg2hasreg = acquireVectorRegister(state, in.arg2, &reg2, ACCESSTYPE_READ);
-            if (arg1hasreg) {
-                | movaps xmm(xmmtmp1), xmm(reg1)
-            } else {
-                | readv xmm(xmmtmp1), in.arg1
-            }
-            if (!arg2hasreg) {
-                | readv xmm(xmmtmp2), in.arg2
-                ||reg2 = xmmtmp2;
-            }
-            | divps xmm(xmmtmp1), xmm(reg2)
-            // NaN check: also gather infinities
-            | movups xmm(xmmtmp2), oword [->inftonanbits]
-            | orps xmm(xmmtmp2), xmm(xmmtmp1)
-            | cmpps xmm(xmmtmp2), xmm(xmmtmp1), 0x3  // CMPUNORD
-            // float -> int -> float
-            | cvttps2dq xmm(xmmtmp1), xmm(xmmtmp1)
-            | cvtdq2ps xmm(xmmtmp1), xmm(xmmtmp1)
-            // reintroduce any NaNs
-            | andps xmm(xmmtmp2), oword [->nanbits]
-            | orps xmm(xmmtmp1), xmm(xmmtmp2)
-            // if we wiped out arg2 due to the NaN check, re-read it
-            ||if (reg2 == xmmtmp2) {
-                | readv xmm(xmmtmp2), in.arg2
-            ||}
-            | mulps xmm(xmmtmp1), xmm(reg2)
-            // we can now reuse xmmtmp2 if needed
-            ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp2);
-            if (arg1hasreg) {
-                | movaps xmm(reg3), xmm(reg1)
-            } else {
+            if (state->cpuflags & SIMD_X86_SSE41) {
+                ||acquireVectorRegisterOrLoad(state, in.arg2, &reg2, ACCESSTYPE_READ, xmmtmp2);
+                if (acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
+                    | movaps xmm(xmmtmp1), xmm(reg1)
+                } else {
+                    | readv xmm(xmmtmp1), in.arg1
+                }
+                | divps xmm(xmmtmp1), xmm(reg2)
+                | roundps xmm(xmmtmp1), xmm(xmmtmp1), 0x01
+                | mulps xmm(xmmtmp1), xmm(reg2)
+                ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp2);
                 | readv xmm(reg3), in.arg1
+                | subps xmm(reg3), xmm(xmmtmp1)
+                | writev_or_notify reg3, in.arg3, xmmtmp1
+            } else {
+                | extern2 remss, 0, 0, 0
+                | extern2 remss, 1, 1, 1
+                | extern2 remss, 2, 2, 2
+                | extern2 remss, 3, 3, 3
             }
-            | subps xmm(reg3), xmm(xmmtmp1)
-            | writev_or_notify reg3, in.arg3, xmmtmp2
             break;
         }
 

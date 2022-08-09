@@ -209,10 +209,10 @@ static void test_divss(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
-static void test_modss(void)
+static void test_remss(void)
 {
     archive a = create_archive_array("test", 2, 1, 3, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_MODSS, 0x00, 0x01, 0x02)
+        LMNT_OP_BYTES(LMNT_OP_REMSS, 0x00, 0x01, 0x02)
     );
     test_function_data fndata = { NULL, NULL };
     TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
@@ -231,7 +231,7 @@ static void test_modss(void)
 
     TEST_UPDATE_ARGS(ctx, fndata, 0, -5.1f, 3.0f);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], -2.1, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 0.9, FLOAT_ERROR_MARGIN);
 
     TEST_UPDATE_ARGS(ctx, fndata, 0, -5.1f, -3.0f);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
@@ -239,7 +239,7 @@ static void test_modss(void)
 
     TEST_UPDATE_ARGS(ctx, fndata, 0, 1.0f, -3.0f);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 1.0, FLOAT_ERROR_MARGIN);
+    CU_ASSERT_DOUBLE_EQUAL(rvals[0], -2.0, FLOAT_ERROR_MARGIN);
 
     TEST_UPDATE_ARGS(ctx, fndata, 0, 2.5f, 1.4f);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
@@ -537,7 +537,7 @@ MAKE_REGISTER_SUITE_FUNCTION(maths_scalar,
     CUNIT_CI_TEST(test_subss),
     CUNIT_CI_TEST(test_mulss),
     CUNIT_CI_TEST(test_divss),
-    CUNIT_CI_TEST(test_modss),
+    CUNIT_CI_TEST(test_remss),
     CUNIT_CI_TEST(test_powss),
     CUNIT_CI_TEST(test_sqrts),
     CUNIT_CI_TEST(test_ln),

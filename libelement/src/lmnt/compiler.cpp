@@ -559,7 +559,7 @@ static element_result compile_binary(
         op = LMNT_OP_POWSS;
         goto num_operation;
     case element::instruction_binary::op::rem:
-        op = LMNT_OP_MODSS;
+        op = LMNT_OP_REMSS;
         goto num_operation;
     case element::instruction_binary::op::sub:
         op = LMNT_OP_SUBSS;
