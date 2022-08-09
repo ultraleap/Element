@@ -586,9 +586,9 @@ static element_result compile_binary(
         output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6) }); // + 1
         output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, arg2_stack_idx, 0, 0 });                                 // + 2
         output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6) }); // + 3
-        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIIS, 1, 0, stack_idx });                                 // + 4
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, stack_idx }); // 1                  // + 4
         output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, U16_LO(start_idx + 7), U16_HI(start_idx + 7) });    // + 5
-        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIIS, 0, 0, stack_idx });                                 // + 6
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIBS, 0x0000, 0x0000, stack_idx }); // 0                  // + 6
         return ELEMENT_OK;
     case element::instruction_binary::op::or_:
         // (arg1 > 0.0 || arg2 > 0.0)
@@ -596,9 +596,9 @@ static element_result compile_binary(
         output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCGT, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6) }); // + 1
         output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, arg2_stack_idx, 0, 0 });                                 // + 2
         output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCGT, 0, U16_LO(start_idx + 6), U16_HI(start_idx + 6) }); // + 3
-        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIIS, 0, 0, stack_idx });                                 // + 4
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIBS, 0x0000, 0x0000, stack_idx }); // 0                  // + 4
         output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCH, 0, U16_LO(start_idx + 7), U16_HI(start_idx + 7) });    // + 5
-        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIIS, 1, 0, stack_idx });                                 // + 6
+        output.emplace_back(lmnt_instruction{ LMNT_OP_ASSIGNIBS, 0x0000, 0x3F80, stack_idx }); // 1                  // + 6
         return ELEMENT_OK;
 
     //comparison
