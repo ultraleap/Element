@@ -41,9 +41,9 @@ enum
     // div: stack, stack, stack
     LMNT_OP_DIVSS,
     LMNT_OP_DIVVV,
-    // mod: stack, stack, stack
-    LMNT_OP_MODSS,
-    LMNT_OP_MODVV,
+    // rem: stack, stack, stack
+    LMNT_OP_REMSS,
+    LMNT_OP_REMVV,
     // trig: stack, null, stack
     LMNT_OP_SIN,
     LMNT_OP_COS,

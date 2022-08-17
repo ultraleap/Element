@@ -28,9 +28,9 @@ static const char filedata_circle_double[] = {
     0x0F, 0x00, 0x00, 0x00, // ops_count
     // stack: [tau, 1.0 | t, i, radius, interval | pos_x, pos_y, pos_z, dir_x, dir_y, dir_z, intens]
     //temp7 = ((time_i % interval) + time_f) % interval
-    LMNT_OP_BYTES(LMNT_OP_MODSS, 0x02, 0x05, 0x07),
+    LMNT_OP_BYTES(LMNT_OP_REMSS, 0x02, 0x05, 0x07),
     LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x07, 0x03, 0x07),
-    LMNT_OP_BYTES(LMNT_OP_MODSS, 0x07, 0x05, 0x07),
+    LMNT_OP_BYTES(LMNT_OP_REMSS, 0x07, 0x05, 0x07),
     //temp7 = div(temp7, interval)
     LMNT_OP_BYTES(LMNT_OP_DIVSS, 0x07, 0x05, 0x07),
     //temp7 = mul(temp7, tau)

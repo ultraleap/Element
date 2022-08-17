@@ -315,8 +315,10 @@ Division by zero results in the appropriate infinity for floating-point value ty
 ```
 
 
-## `MODSS`
-Performs a modulo operation with two scalar values and writes the result to a third scalar.
+## `REMSS`
+Performs a remainder operation with two scalar values and writes the result to a third scalar.
+
+Note that different programming languages have differing interpretations of modulo or remainder; the definition in LMNT is as below.
 
 If the denominator value is `0`, the result will be `NaN`.
 
@@ -327,12 +329,14 @@ If the denominator value is `0`, the result will be `NaN`.
 | 3   | Output    | Stack Loc  | Scalar | Stack location to write result to      |
 
 ```c
-    stack[arg3] = stack[arg1] % stack[arg2]
+    stack[arg3] = stack[arg1] - floor(stack[arg1] / stack[arg2]) * stack[arg2]
 ```
 
 
-## `MODVV`
-Memberwise performs a modulo operation on two vector values and writes the result to a third vector.
+## `REMVV`
+Memberwise performs a remainder operation on two vector values and writes the result to a third vector.
+
+Note that different programming languages have differing interpretations of modulo and remainder; the definition in LMNT is as below.
 
 If a denominator value is `0`, the result will be `NaN`. Occurrences of this must have no impact on the other lanes of the operation.
 
@@ -344,7 +348,7 @@ If a denominator value is `0`, the result will be `NaN`. Occurrences of this mus
 
 ```c
     for (i=0..3)
-        stack[arg3+i] = stack[arg1+i] % stack[arg2+i]
+        stack[arg3+i] = stack[arg1+i] - floor(stack[arg1+i] / stack[arg2+i]) * stack[arg2+i]
 ```
 
 

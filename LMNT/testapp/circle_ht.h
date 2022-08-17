@@ -27,9 +27,9 @@ static const char filedata_circle_ht[] = {
     // 0x16 | temp22, temp23, temp24, temp25, temp26
     // ]
     //temp22 = ((time_i % interval) + time_f) % interval
-    LMNT_OP_BYTES(LMNT_OP_MODSS, 0x02, 0x05, 0x16),
+    LMNT_OP_BYTES(LMNT_OP_REMSS, 0x02, 0x05, 0x16),
     LMNT_OP_BYTES(LMNT_OP_ADDSS, 0x16, 0x03, 0x16),
-    LMNT_OP_BYTES(LMNT_OP_MODSS, 0x16, 0x05, 0x16),
+    LMNT_OP_BYTES(LMNT_OP_REMSS, 0x16, 0x05, 0x16),
     //temp22 = div(temp22, interval)
     LMNT_OP_BYTES(LMNT_OP_DIVSS, 0x16, 0x05, 0x16),
     //temp22 = mul(temp22, tau)

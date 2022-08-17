@@ -203,7 +203,7 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     case LMNT_OP_SUBSS:
     case LMNT_OP_MULSS:
     case LMNT_OP_DIVSS:
-    case LMNT_OP_MODSS:
+    case LMNT_OP_REMSS:
     case LMNT_OP_POWSS:
     case LMNT_OP_MINSS:
     case LMNT_OP_MAXSS:
@@ -215,7 +215,7 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
     case LMNT_OP_SUBVV:
     case LMNT_OP_MULVV:
     case LMNT_OP_DIVVV:
-    case LMNT_OP_MODVV:
+    case LMNT_OP_REMVV:
     case LMNT_OP_POWVV:
     case LMNT_OP_MINVV:
     case LMNT_OP_MAXVV:
