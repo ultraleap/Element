@@ -39,9 +39,7 @@ LMNT_ATTR_FAST static inline LMNT_FORCEINLINE lmnt_result execute_function(lmnt_
         case LMNT_OP_ASSIGNSS:  opresult = lmnt_op_assignss(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_ASSIGNVV:  opresult = lmnt_op_assignvv(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_ASSIGNSV:  opresult = lmnt_op_assignsv(ctx, op.arg1, op.arg2, op.arg3); break;
-        case LMNT_OP_ASSIGNIIS: opresult = lmnt_op_assigniis(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_ASSIGNIBS: opresult = lmnt_op_assignibs(ctx, op.arg1, op.arg2, op.arg3); break;
-        case LMNT_OP_ASSIGNIIV: opresult = lmnt_op_assigniiv(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_ASSIGNIBV: opresult = lmnt_op_assignibv(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_DLOADIIS:  opresult = lmnt_op_dloadiis(ctx, op.arg1, op.arg2, op.arg3); break;
         case LMNT_OP_DLOADIIV:  opresult = lmnt_op_dloadiiv(ctx, op.arg1, op.arg2, op.arg3); break;

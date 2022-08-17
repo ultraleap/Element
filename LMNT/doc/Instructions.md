@@ -80,20 +80,6 @@ Takes a vector value from a single stack location and broadcasts it to a 4-wide 
 ```
 
 
-## `ASSIGNIIS`
-Takes an immediate value as a signed integer and writes its value equivalent to a stack location.
-
-| Arg | Direction | Type       | Size       | Meaning                               |
-| --: | :-------- | :--------- | :--------  | :------------------------------------ |
-| 1   | Input     | Immediate  | LO(SInt32) | Low bits of signed integer immediate  |
-| 2   | Input     | Immediate  | HI(SInt32) | High bits of signed integer immediate |
-| 3   | Output    | Stack Loc  | Scalar     | Stack location to write value to      |
-
-```c
-    stack[arg3] = signed_value_cast(arg1 | (arg2 << sizeof(arg1)))
-```
-
-
 ## `ASSIGNIBS`
 Takes a binary-encoded value and writes that value to a stack location.
 
@@ -107,21 +93,6 @@ Note: use of this instruction requires that `sizeof(arg1) + sizeof(arg2) == size
 
 ```c
     stack[arg3] = bit_cast(arg1 | (arg2 << sizeof(arg1)))
-```
-
-
-## `ASSIGNIIV`
-Takes an immediate value as a signed integer and broadcasts its value equivalent to a 4-wide set of stack locations.
-
-| Arg | Direction | Type       | Size       | Meaning                               |
-| --: | :-------- | :--------- | :--------  | :------------------------------------ |
-| 1   | Input     | Immediate  | LO(SInt32) | Low bits of signed integer immediate  |
-| 2   | Input     | Immediate  | HI(SInt32) | High bits of signed integer immediate |
-| 3   | Output    | Stack Loc  | Vector     | First stack location to write to      |
-
-```c
-    for (i=0..3)
-        stack[arg3+i] = signed_value_cast(arg1 | (arg2 << sizeof(arg1)))
 ```
 
 

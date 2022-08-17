@@ -19,9 +19,7 @@ enum
     LMNT_OP_ASSIGNVV,
     LMNT_OP_ASSIGNSV,
     // assign variants: immlo, immhi, stack
-    LMNT_OP_ASSIGNIIS,
     LMNT_OP_ASSIGNIBS,
-    LMNT_OP_ASSIGNIIV,
     LMNT_OP_ASSIGNIBV,
     // data load: immediate, immediate, stack
     LMNT_OP_DLOADIIS,

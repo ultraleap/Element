@@ -108,50 +108,6 @@ static void test_assignsv(void)
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
-static void test_assigniis(void)
-{
-    lmnt_value rvals[1];
-    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
-    archive a;
-    test_function_data fndata = { NULL, NULL };
-
-    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x002A, 0x0000, 0x00)
-    );
-    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
-    delete_archive_array(a);
-    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 42.0, FLOAT_ERROR_MARGIN);
-    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
-
-    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0xFFD6, 0xFFFF, 0x00)
-    );
-    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
-    delete_archive_array(a);
-    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], -42.0, FLOAT_ERROR_MARGIN);
-    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
-
-    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x0000, 0x0000, 0x00)
-    );
-    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
-    delete_archive_array(a);
-    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 0.0, FLOAT_ERROR_MARGIN);
-    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
-
-    a = create_archive_array("test", 0, 1, 1, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIS, 0x58CB, 0xFFA9, 0x00)
-    );
-    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
-    delete_archive_array(a);
-    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], -5678901.0, FLOAT_ERROR_MARGIN);
-    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
-}
-
 static void test_assignibs(void)
 {
     lmnt_value rvals[1];
@@ -202,62 +158,6 @@ static void test_assignibs(void)
     delete_archive_array(a);
     CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
     CU_ASSERT_DOUBLE_EQUAL(rvals[0], -5678901.0, FLOAT_ERROR_MARGIN);
-    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
-}
-
-static void test_assigniiv(void)
-{
-    lmnt_value rvals[4];
-    const size_t rvals_count = sizeof(rvals)/sizeof(lmnt_value);
-    archive a;
-    test_function_data fndata = { NULL, NULL };
-
-    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIV, 0x002A, 0x0000, 0x00)
-    );
-    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
-    delete_archive_array(a);
-    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 42.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[1], 42.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[2], 42.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[3], 42.0, FLOAT_ERROR_MARGIN);
-    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
-
-    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIV, 0xFFD6, 0xFFFF, 0x00)
-    );
-    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
-    delete_archive_array(a);
-    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], -42.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[1], -42.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[2], -42.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[3], -42.0, FLOAT_ERROR_MARGIN);
-    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
-
-    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIV, 0x0000, 0x0000, 0x00)
-    );
-    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
-    delete_archive_array(a);
-    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], 0.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[1], 0.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[2], 0.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[3], 0.0, FLOAT_ERROR_MARGIN);
-    TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
-
-    a = create_archive_array("test", 0, 4, 4, 1, 0, 0,
-        LMNT_OP_BYTES(LMNT_OP_ASSIGNIIV, 0x58CB, 0xFFA9, 0x00)
-    );
-    TEST_LOAD_ARCHIVE(ctx, "test", a, fndata);
-    delete_archive_array(a);
-    CU_ASSERT_EQUAL(TEST_EXECUTE(ctx, fndata, rvals, rvals_count), rvals_count);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[0], -5678901.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[1], -5678901.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[2], -5678901.0, FLOAT_ERROR_MARGIN);
-    CU_ASSERT_DOUBLE_EQUAL(rvals[3], -5678901.0, FLOAT_ERROR_MARGIN);
     TEST_UNLOAD_ARCHIVE(ctx, a, fndata);
 }
 
@@ -696,9 +596,7 @@ MAKE_REGISTER_SUITE_FUNCTION(misc,
     CUNIT_CI_TEST(test_assignss),
     CUNIT_CI_TEST(test_assignvv),
     CUNIT_CI_TEST(test_assignsv),
-    CUNIT_CI_TEST(test_assigniis),
     CUNIT_CI_TEST(test_assignibs),
-    CUNIT_CI_TEST(test_assigniiv),
     CUNIT_CI_TEST(test_assignibv),
     CUNIT_CI_TEST(test_dloadiis),
     CUNIT_CI_TEST(test_dloadiiv),

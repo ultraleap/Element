@@ -498,21 +498,6 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | writev_or_notify reg3, in.arg3, vtmpv1
             }
             break;
-        case LMNT_OP_ASSIGNIIS:
-        {
-            const lmnt_loffset uoff = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
-            const int32_t off = *(const int32_t*)(&uoff);
-            const lmnt_value val = (const lmnt_value)off;
-            const lmnt_loffset bin = *(const lmnt_loffset*)(&val);
-            | .rodata
-            |1:
-            | .long bin
-            | .code
-            ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
-            | vldr s(reg3), <1
-            | writes_or_notify reg3, in.arg3, vtmps1
-            break;
-        }
         case LMNT_OP_ASSIGNIBS:
         {
             const lmnt_loffset bin = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
@@ -523,22 +508,6 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmps1);
             | vldr s(reg3), <1
             | writes_or_notify reg3, in.arg3, vtmps1
-            break;
-        }
-        case LMNT_OP_ASSIGNIIV:
-        {
-            const lmnt_loffset uoff = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
-            const int32_t off = *(const int32_t*)(&uoff);
-            const lmnt_value val = (const lmnt_value)off;
-            const lmnt_loffset bin = *(const lmnt_loffset*)(&val);
-            | .rodata
-            |1:
-            | .long bin, bin, bin, bin
-            | .code
-            ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, vtmpv1);
-            | adr rtmp1, <1
-            | vldm rtmp1, {s(reg3)-s(reg3+3)}
-            | writev_or_notify reg3, in.arg3, vtmpv1
             break;
         }
         case LMNT_OP_ASSIGNIBV:
