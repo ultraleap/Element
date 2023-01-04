@@ -448,6 +448,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | writev_or_notify reg3, in.arg3, xmmtmp1
             break;
         }
+/*
         case LMNT_OP_DLOADIIS:
         {
             const lmnt_data_section* sec = validated_get_data_section(&ctx->archive, in.arg1);
@@ -533,31 +534,40 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | writes_or_notify reg3, in.arg3, xmmtmp2
             break;
         }
+*/
 
         case LMNT_OP_ADDSS:
             | maths2 addss
             break;
+/*
         case LMNT_OP_ADDVV:
             | mathv2 addps
             break;
+*/
         case LMNT_OP_SUBSS:
             | maths2 subss
             break;
+/*
         case LMNT_OP_SUBVV:
             | mathv2 subps
             break;
+*/
         case LMNT_OP_MULSS:
             | maths2 mulss
             break;
+/*
         case LMNT_OP_MULVV:
             | mathv2 mulps
             break;
+*/
         case LMNT_OP_DIVSS:
             | maths2 divss
             break;
+/*
         case LMNT_OP_DIVVV:
             | mathv2 divps
             break;
+*/
 
         case LMNT_OP_REMSS:
         {
@@ -580,6 +590,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             }
             break;
         }
+/*
         case LMNT_OP_REMVV:
         {
             if (state->cpuflags & SIMD_X86_SSE41) {
@@ -604,37 +615,39 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             }
             break;
         }
+*/
 
         // TODO: https://github.com/divideconcept/FastTrigo/blob/master/fasttrigo.cpp
-        case LMNT_OP_SIN:
-            | extern1 sinf, 0, in.arg3, 0, reg3
+        case LMNT_OP_SINR:
+            | extern1 sinrf, 0, in.arg3, 0, reg3
             break;
-        case LMNT_OP_COS:
-            | extern1 cosf, 0, in.arg3, 0, reg3
+        case LMNT_OP_COSR:
+            | extern1 cosrf, 0, in.arg3, 0, reg3
             break;
-        case LMNT_OP_TAN:
-            | extern1 tanf, 0, in.arg3, 0, reg3
+        case LMNT_OP_TANR:
+            | extern1 tanrf, 0, in.arg3, 0, reg3
             break;
-        case LMNT_OP_ASIN:
-            | extern1 asinf, 0, in.arg3, 0, reg3
+        case LMNT_OP_ASINR:
+            | extern1 asinrf, 0, in.arg3, 0, reg3
             break;
-        case LMNT_OP_ACOS:
-            | extern1 acosf, 0, in.arg3, 0, reg3
+        case LMNT_OP_ACOSR:
+            | extern1 acosrf, 0, in.arg3, 0, reg3
             break;
-        case LMNT_OP_ATAN:
-            | extern1 atanf, 0, in.arg3, 0, reg3
+        case LMNT_OP_ATANR:
+            | extern1 atanrf, 0, in.arg3, 0, reg3
             break;
-        case LMNT_OP_ATAN2:
-            | extern2 atan2f, 0, 0, 0
+        case LMNT_OP_ATAN2R:
+            | extern2 atan2rf, 0, 0, 0
             break;
-        case LMNT_OP_SINCOS:
-            | extern1 sinf, 0, in.arg2, 0, reg2
-            | extern1 cosf, 0, in.arg3, 0, reg3
+        case LMNT_OP_SINCOSR:
+            | extern1 sinrf, 0, in.arg2, 0, reg2
+            | extern1 cosrf, 0, in.arg3, 0, reg3
             break;
 
         case LMNT_OP_POWSS:
             | extern2 powf, 0, 0, 0
             break;
+/*
         // TODO: SSE?
         case LMNT_OP_POWVV:
             | extern2 powf, 0, 0, 0
@@ -648,6 +661,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | extern2 powf, 2, 0, 2
             | extern2 powf, 3, 0, 3
             break;
+*/
         case LMNT_OP_SQRTS:
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             if (acquireScalarRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
@@ -657,6 +671,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             }
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
+/*
         case LMNT_OP_SQRTV:
             ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             if (acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
@@ -670,12 +685,15 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_LN:
             | extern1 logf, 0, in.arg3, 0, reg3
             break;
+*/
         case LMNT_OP_LOG2:
             | extern1 log2f, 0, in.arg3, 0, reg3
             break;
+/*
         case LMNT_OP_LOG10:
             | extern1 log10f, 0, in.arg3, 0, reg3
             break;
+*/
 
         case LMNT_OP_ABSS:
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
@@ -689,6 +707,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | andps xmm(reg3), xmm(xmmtmp1)
             | writes_or_notify reg3, in.arg3, xmmtmp1
             break;
+/*
         case LMNT_OP_ABSV:
             ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             if (acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
@@ -700,7 +719,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | andps xmm(reg3), xmm(xmmtmp1)
             | writev_or_notify reg3, in.arg3, xmmtmp1
             break;
-
+*/
         case LMNT_OP_SUMV:
             ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
             if (acquireVectorRegister(state, in.arg1, &reg1, ACCESSTYPE_READ)) {
@@ -727,6 +746,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
         case LMNT_OP_MAXSS:
             | maths2 maxss
             break;
+/*
         case LMNT_OP_MINVV:
             | mathv2 minps
             break;
@@ -765,7 +785,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             }
             | writev_or_notify reg3, in.arg3, xmmtmp1
             break;
-
+*/
         // roundss/roundps instructions are only present in SSE4.1
         // Rounding mode: 0b00 = round, 0b01 = floor, 0b10 = ceil, 0b11 = trunc
         case LMNT_OP_FLOORS:
@@ -781,6 +801,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | extern1 floorf, 0, in.arg3, 0, reg3
             }
             break;
+/*
         case LMNT_OP_FLOORV:
             if (state->cpuflags & SIMD_X86_SSE41) {
                 ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
@@ -794,6 +815,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | extern1 floorf, 3, in.arg3, 3, reg3
             }
             break;
+*/
         case LMNT_OP_ROUNDS:
             if (state->cpuflags & SIMD_X86_SSE41) {
                 ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
@@ -804,6 +826,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | extern1 nearbyintf, 0, in.arg3, 0, reg3
             }
             break;
+/*
         case LMNT_OP_ROUNDV:
             if (state->cpuflags & SIMD_X86_SSE41) {
                 ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
@@ -817,6 +840,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | extern1 nearbyintf, 3, in.arg3, 3, reg3
             }
             break;
+*/
         case LMNT_OP_CEILS:
             if (state->cpuflags & SIMD_X86_SSE41) {
                 ||acquireScalarRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
@@ -827,6 +851,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | extern1 ceilf, 0, in.arg3, 0, reg3
             }
             break;
+/*
         case LMNT_OP_CEILV:
             if (state->cpuflags & SIMD_X86_SSE41) {
                 ||acquireVectorRegisterOrDefault(state, in.arg3, &reg3, ACCESSTYPE_WRITE, xmmtmp1);
@@ -863,6 +888,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
                 | extern1 truncf, 3, in.arg3, 3, reg3
             }
             break;
+*/
 
         case LMNT_OP_INDEXRIS:
         {
@@ -1205,6 +1231,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             ++cur_branch;
             break;
 
+/*
         case LMNT_OP_EXTCALL:
         {
             lmnt_loffset def_offset = LMNT_COMBINE_OFFSET(in.arg1, in.arg2);
@@ -1229,7 +1256,7 @@ lmnt_result lmnt_jit_x86_64_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             | jne ->return
             break;
         }
-
+*/
         default:
             break;
         }

@@ -649,30 +649,30 @@ lmnt_result lmnt_jit_armv7m_compile(lmnt_ictx* ctx, const lmnt_def* def, lmnt_ji
             break;
         }
 
-        case LMNT_OP_SIN:
-            | extern1 sinf, 0, in.arg3, reg3
+        case LMNT_OP_SINR:
+            | extern1 sinrf, 0, in.arg3, reg3
             break;
-        case LMNT_OP_COS:
-            | extern1 cosf, 0, in.arg3, reg3
+        case LMNT_OP_COSR:
+            | extern1 cosrf, 0, in.arg3, reg3
             break;
-        case LMNT_OP_TAN:
-            | extern1 tanf, 0, in.arg3, reg3
+        case LMNT_OP_TANR:
+            | extern1 tanrf, 0, in.arg3, reg3
             break;
-        case LMNT_OP_ASIN:
-            | extern1 asinf, 0, in.arg3, reg3
+        case LMNT_OP_ASINR:
+            | extern1 asinrf, 0, in.arg3, reg3
             break;
-        case LMNT_OP_ACOS:
-            | extern1 acosf, 0, in.arg3, reg3
+        case LMNT_OP_ACOSR:
+            | extern1 acosrf, 0, in.arg3, reg3
             break;
-        case LMNT_OP_ATAN:
-            | extern1 atanf, 0, in.arg3, reg3
+        case LMNT_OP_ATANR:
+            | extern1 atanrf, 0, in.arg3, reg3
             break;
-        case LMNT_OP_ATAN2:
-            | extern2 atan2f, 0, 0, 0
+        case LMNT_OP_ATAN2R:
+            | extern2 atan2rf, 0, 0, 0
             break;
-        case LMNT_OP_SINCOS:
-            | extern1 sinf, 0, in.arg2, reg2
-            | extern1 cosf, 0, in.arg3, reg3
+        case LMNT_OP_SINCOSR:
+            | extern1 sinrf, 0, in.arg2, reg2
+            | extern1 cosrf, 0, in.arg3, reg3
             break;
 
         case LMNT_OP_POWSS:
