@@ -72,17 +72,17 @@ const std::unordered_map<std::string, std::function<std::unique_ptr<const intrin
     { "ceil", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::ceil, type::num.get(), type::num.get()) : nullptr); } },
     { "floor", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::floor, type::num.get(), type::num.get()) : nullptr); } },
 
-    { "sin", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::sin, type::num.get(), type::num.get()) : nullptr); } },
-    { "cos", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::cos, type::num.get(), type::num.get()) : nullptr); } },
-    { "tan", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::tan, type::num.get(), type::num.get()) : nullptr); } },
+    { "sinr", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::sinr, type::num.get(), type::num.get()) : nullptr); } },
+    { "cosr", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::cosr, type::num.get(), type::num.get()) : nullptr); } },
+    { "tanr", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::tanr, type::num.get(), type::num.get()) : nullptr); } },
 
-    { "asin", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::asin, type::num.get(), type::num.get()) : nullptr); } },
-    { "acos", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::acos, type::num.get(), type::num.get()) : nullptr); } },
-    { "atan", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::atan, type::num.get(), type::num.get()) : nullptr); } },
+    { "asinr", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::asinr, type::num.get(), type::num.get()) : nullptr); } },
+    { "acosr", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::acosr, type::num.get(), type::num.get()) : nullptr); } },
+    { "atanr", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::atanr, type::num.get(), type::num.get()) : nullptr); } },
 
-    { "atan2", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_binary>(element_binary_op::atan2, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
+    { "atan2r", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_binary>(element_binary_op::atan2r, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
 
-    { "ln", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::ln, type::num.get(), type::num.get()) : nullptr); } },
+    { "log2", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_unary>(element_unary_op::log2, type::num.get(), type::num.get()) : nullptr); } },
     { "log", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_binary>(element_binary_op::log, type::num.get(), type::num.get(), type::num.get()) : nullptr); } },
 
     { "NaN", [](const declaration* decl) { return (is_type_of<function_declaration>(decl) ? std::make_unique<intrinsic_nullary>(element_nullary_op::nan, type::num.get()) : nullptr); } },

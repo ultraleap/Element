@@ -175,6 +175,7 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
         LMNT_V_OK_OR_RETURN(validate_operand_immediate32(archive, def, arg1, arg2, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 4, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
+/*
     case LMNT_OP_DLOADIIS:
         LMNT_V_OK_OR_RETURN(validate_operand_dataload_imm(archive, def, arg1, arg2, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
@@ -198,6 +199,7 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
         LMNT_V_OK_OR_RETURN(validate_operand_dataload_section(archive, def, arg1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
+*/
     // stack, stack, stack
     case LMNT_OP_ADDSS:
     case LMNT_OP_SUBSS:
@@ -211,6 +213,7 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg2, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
+/*
     case LMNT_OP_ADDVV:
     case LMNT_OP_SUBVV:
     case LMNT_OP_MULVV:
@@ -230,36 +233,38 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg2, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 4, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
+*/
     // trig: stack, null, stack
-    case LMNT_OP_SIN:
-    case LMNT_OP_COS:
-    case LMNT_OP_TAN:
-    case LMNT_OP_ASIN:
-    case LMNT_OP_ACOS:
-    case LMNT_OP_ATAN:
+    case LMNT_OP_SINR:
+    case LMNT_OP_COSR:
+    case LMNT_OP_TANR:
+    case LMNT_OP_ASINR:
+    case LMNT_OP_ACOSR:
+    case LMNT_OP_ATANR:
     case LMNT_OP_SQRTS:
-    case LMNT_OP_LN:
+//    case LMNT_OP_LN:
     case LMNT_OP_LOG2:
-    case LMNT_OP_LOG10:
+//    case LMNT_OP_LOG10:
     case LMNT_OP_ABSS:
     case LMNT_OP_FLOORS:
     case LMNT_OP_ROUNDS:
     case LMNT_OP_CEILS:
-    case LMNT_OP_TRUNCS:
+//    case LMNT_OP_TRUNCS:
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
     // trig: stack, stack, stack
-    case LMNT_OP_ATAN2:
+    case LMNT_OP_ATAN2R:
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg2, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
-    case LMNT_OP_SINCOS:
+    case LMNT_OP_SINCOSR:
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg2, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
+/*
     // sqrt: stack, null, stack
     case LMNT_OP_SQRTV:
     case LMNT_OP_ABSV:
@@ -270,6 +275,7 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 4, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 4, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
+*/
     case LMNT_OP_SUMV:
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg1, 4, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
@@ -318,9 +324,11 @@ static lmnt_validation_result validate_instruction(const lmnt_archive* archive, 
         LMNT_V_OK_OR_RETURN(validate_operand_stack_read(archive, def, arg2, 1, constants_count, rw_stack_count));
         LMNT_V_OK_OR_RETURN(validate_operand_stack_write(archive, def, arg3, 1, constants_count, rw_stack_count));
         return LMNT_VALIDATION_OK;
+/*
     // extern call: deflo, defhi, imm
     case LMNT_OP_EXTCALL:
         return validate_operand_defptr(archive, def, arg1, arg2, arg3, constants_count, rw_stack_count);
+*/
     default:
         return LMNT_VERROR_BAD_INSTRUCTION;
     }

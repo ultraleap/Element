@@ -419,32 +419,32 @@ static element_result compile_unary(
         case element::instruction_unary::op::abs:
             op = LMNT_OP_ABSS;
             break;
-        case element::instruction_unary::op::acos:
-            op = LMNT_OP_ACOS;
+        case element::instruction_unary::op::acosr:
+            op = LMNT_OP_ACOSR;
             break;
-        case element::instruction_unary::op::asin:
-            op = LMNT_OP_ASIN;
+        case element::instruction_unary::op::asinr:
+            op = LMNT_OP_ASINR;
             break;
-        case element::instruction_unary::op::atan:
-            op = LMNT_OP_ATAN;
+        case element::instruction_unary::op::atanr:
+            op = LMNT_OP_ATANR;
             break;
         case element::instruction_unary::op::ceil:
             op = LMNT_OP_CEILS;
             break;
-        case element::instruction_unary::op::cos:
-            op = LMNT_OP_COS;
+        case element::instruction_unary::op::cosr:
+            op = LMNT_OP_COSR;
             break;
         case element::instruction_unary::op::floor:
             op = LMNT_OP_FLOORS;
             break;
-        case element::instruction_unary::op::ln:
-            op = LMNT_OP_LN;
+        case element::instruction_unary::op::log2:
+            op = LMNT_OP_LOG2;
             break;
-        case element::instruction_unary::op::sin:
-            op = LMNT_OP_SIN;
+        case element::instruction_unary::op::sinr:
+            op = LMNT_OP_SINR;
             break;
-        case element::instruction_unary::op::tan:
-            op = LMNT_OP_TAN;
+        case element::instruction_unary::op::tanr:
+            op = LMNT_OP_TANR;
             break;
         default:
             assert(false);
@@ -540,8 +540,8 @@ static element_result compile_binary(
     case element::instruction_binary::op::add:
         op = LMNT_OP_ADDSS;
         goto num_operation;
-    case element::instruction_binary::op::atan2:
-        op = LMNT_OP_ATAN2;
+    case element::instruction_binary::op::atan2r:
+        op = LMNT_OP_ATAN2R;
         goto num_operation;
     case element::instruction_binary::op::div:
         op = LMNT_OP_DIVSS;
@@ -570,6 +570,7 @@ static element_result compile_binary(
 
     case element::instruction_binary::op::log: {
         // check if we've got a constant base we can work with
+/*
         element_value base_value = 0.0f;
         const bool base_const = arg2_in->get_constant_value(base_value);
         if (base_const) {
@@ -591,6 +592,7 @@ static element_result compile_binary(
                 return ELEMENT_OK;
             }
         }
+*/
         // log(x, b) == log2(x) / log2(b)
         uint16_t base_scratch_idx = 0;
         ELEMENT_OK_OR_RETURN(state.calculate_stack_index(&eb, base_scratch_idx, 1));
@@ -1152,7 +1154,7 @@ static element_result compile_select(
     // note we can't use the selector stack index here as it could be anything (a constant, an input...)
     // we also can't use the result spaces since there could already be calculated results in there
     output.emplace_back(lmnt_instruction{ LMNT_OP_MINSS, selector_stack_idx, last_valid_idx, selector_scratch_idx });
-    output.emplace_back(lmnt_instruction{ LMNT_OP_TRUNCS, selector_scratch_idx, 0, selector_scratch_idx });
+    output.emplace_back(lmnt_instruction{ LMNT_OP_ROUNDS, selector_scratch_idx, 0, selector_scratch_idx });
 
     // check if all our options are constants in a contiguous block
     // if so (and dynamic instructions are allowed), we can just index into them rather than the mess of branching

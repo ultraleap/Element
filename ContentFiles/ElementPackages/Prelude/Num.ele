@@ -30,23 +30,33 @@ intrinsic struct Num
     intrinsic function floor(a:Num):Num
 
     # Trigonometric functions
-    intrinsic function sin(theta:Num):Num
-    intrinsic function cos(theta:Num):Num
-    intrinsic function tan(theta:Num):Num
+    intrinsic function sinr(theta:Num):Num
+    intrinsic function cosr(theta:Num):Num
+    intrinsic function tanr(theta:Num):Num
 
-    intrinsic function asin(theta:Num):Num
-    intrinsic function acos(theta:Num):Num
-    intrinsic function atan(theta:Num):Num
+    intrinsic function asinr(theta:Num):Num
+    intrinsic function acosr(theta:Num):Num
+    intrinsic function atanr(theta:Num):Num
 
     #[[ 2 argument arctangent function where a and b specify a cartesian coordinate ]]
-    intrinsic function atan2(y:Num, x:Num):Num
+    intrinsic function atan2r(y:Num, x:Num):Num
+
+    sin(theta:Num):Num       = sinr(theta.div(pi.add(pi)))
+    cos(theta:Num):Num       = cosr(theta.div(pi.add(pi)))
+    tan(theta:Num):Num       = tanr(theta.div(pi.add(pi)))
+    asin(theta:Num):Num      = asinr(theta).mul(pi.add(pi))
+    acos(theta:Num):Num      = acosr(theta).mul(pi.add(pi))
+    atan(theta:Num):Num      = atanr(theta).mul(pi.add(pi))
+    atan2(y:Num, x:Num):Num  = atan2r(y, x).mul(pi.add(pi))
 
     degrees(radians:Num):Num = radians.mul(180.div(pi))
     radians(degrees:Num):Num = degrees.mul(pi.div(180))
 
-
     # Logarithmic functions
-    intrinsic function ln(a:Num):Num
+    intrinsic function log2(a:Num):Num
+
+    ln(a:Num):Num = log2(a).div(log2(e))
+
     intrinsic function log(a:Num, b:Num):Num
 
     # Constants

@@ -19,13 +19,13 @@ enum class element_nullary_op {
 
 enum class element_unary_op {
     //num
-    sin,
-    cos,
-    tan,
-    asin,
-    acos,
-    atan,
-    ln,
+    sinr,
+    cosr,
+    tanr,
+    asinr,
+    acosr,
+    atanr,
+    log2,
     abs,
     ceil,
     floor,
@@ -45,7 +45,7 @@ enum class element_binary_op {
     min,
     max,
     log,
-    atan2,
+    atan2r,
 
     //boolean
     and_, //reserved keyword

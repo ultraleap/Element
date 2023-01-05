@@ -179,13 +179,13 @@ std::string instruction_to_string(const element::instruction& expression, std::s
         const char* c = nullptr;
         switch (unary->operation()) {
             //num
-            PRINTCASE(element_unary_op::sin)
-            PRINTCASE(element_unary_op::cos)
-            PRINTCASE(element_unary_op::tan)
-            PRINTCASE(element_unary_op::asin)
-            PRINTCASE(element_unary_op::acos)
-            PRINTCASE(element_unary_op::atan)
-            PRINTCASE(element_unary_op::ln)
+            PRINTCASE(element_unary_op::sinr)
+            PRINTCASE(element_unary_op::cosr)
+            PRINTCASE(element_unary_op::tanr)
+            PRINTCASE(element_unary_op::asinr)
+            PRINTCASE(element_unary_op::acosr)
+            PRINTCASE(element_unary_op::atanr)
+            PRINTCASE(element_unary_op::log2)
             PRINTCASE(element_unary_op::abs)
             PRINTCASE(element_unary_op::ceil)
             PRINTCASE(element_unary_op::floor)
@@ -211,7 +211,7 @@ std::string instruction_to_string(const element::instruction& expression, std::s
             PRINTCASE(element_binary_op::min)
             PRINTCASE(element_binary_op::max)
             PRINTCASE(element_binary_op::log)
-            PRINTCASE(element_binary_op::atan2)
+            PRINTCASE(element_binary_op::atan2r)
 
             //boolean
             PRINTCASE(element_binary_op::and_)

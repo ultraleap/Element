@@ -233,24 +233,24 @@ element_value element_evaluate_unary(element::instruction_unary::op op, element_
     //num
     case element::instruction_unary::op::abs:
         return std::fabs(a);
-    case element::instruction_unary::op::acos:
-        return std::acos(a);
-    case element::instruction_unary::op::asin:
-        return std::asin(a);
-    case element::instruction_unary::op::atan:
-        return std::atan(a);
+    case element::instruction_unary::op::acosr:
+        return std::acos(a) * ((float)(1. / (M_PI * 2.)));
+    case element::instruction_unary::op::asinr:
+        return std::asin(a) * ((float)(1. / (M_PI * 2.)));
+    case element::instruction_unary::op::atanr:
+        return std::atan(a) * ((float)(1. / (M_PI * 2.)));
     case element::instruction_unary::op::ceil:
         return std::ceil(a);
-    case element::instruction_unary::op::cos:
-        return std::cos(a);
+    case element::instruction_unary::op::cosr:
+        return std::cos(a * ((float)(M_PI * 2.)));
     case element::instruction_unary::op::floor:
         return std::floor(a);
-    case element::instruction_unary::op::ln:
-        return std::log(a);
-    case element::instruction_unary::op::sin:
-        return std::sin(a);
-    case element::instruction_unary::op::tan:
-        return std::tan(a);
+    case element::instruction_unary::op::log2:
+        return std::log2(a);
+    case element::instruction_unary::op::sinr:
+        return std::sin(a * ((float)(M_PI * 2.)));
+    case element::instruction_unary::op::tanr:
+        return std::tan(a * ((float)(M_PI * 2.)));
 
     //boolean
     case element::instruction_unary::op::not_:
@@ -267,8 +267,8 @@ element_value element_evaluate_binary(element::instruction_binary::op op, elemen
         //num
     case element::instruction_binary::op::add:
         return a + b;
-    case element::instruction_binary::op::atan2:
-        return std::atan2(a, b);
+    case element::instruction_binary::op::atan2r:
+        return std::atan2(a, b) * ((float)(1. / (M_PI * 2.)));
     case element::instruction_binary::op::div:
         return a / b;
     case element::instruction_binary::op::log:
