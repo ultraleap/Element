@@ -1176,6 +1176,7 @@ static element_result compile_select(
             output.emplace_back(lmnt_instruction{ LMNT_OP_CMPZ, selector_scratch_idx, 0, 0 });
             output.emplace_back(lmnt_instruction{ LMNT_OP_BRANCHCLE, 0, 0, 0 }); // target filled in later
             output.emplace_back(lmnt_instruction{ LMNT_OP_SUBSS, selector_scratch_idx, one_idx, selector_scratch_idx });
+            output.emplace_back(lmnt_instruction{ LMNT_OP_ROUNDS, selector_scratch_idx, 0, selector_scratch_idx });
         }
 
         uint16_t option0_stack_idx;
@@ -1194,8 +1195,8 @@ static element_result compile_select(
 
             const size_t option_idx = output.size();
             // fill in the target index for this branch option
-            output[branches_start_idx + i * 3 + 1].arg2 = U16_LO(option_idx);
-            output[branches_start_idx + i * 3 + 1].arg3 = U16_HI(option_idx);
+            output[branches_start_idx + i * 4 + 1].arg2 = U16_LO(option_idx);
+            output[branches_start_idx + i * 4 + 1].arg3 = U16_HI(option_idx);
 
             ELEMENT_OK_OR_RETURN(state.push_context(es.options_at(i).get(), execution_type::conditional));
             ELEMENT_OK_OR_RETURN(compile_instruction(state, es.options_at(i).get(), output, flags));
